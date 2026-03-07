@@ -242,8 +242,17 @@ Applied to all HTTP responses via `control-plane/middleware/security.js`:
 
 - **Algorithm**: Sliding window per IP address
 - **Default**: 100 requests per 60 seconds
+- **Auth endpoint**: Additional rate limit of 10 login attempts per minute per IP
 - **Response**: HTTP 429 with JSON error body
 - **Configurable**: `security.rateLimitWindowMs` and `security.rateLimitMaxRequests` in config
+- **Memory protection**: Rate limit maps auto-evict expired entries above 10K IPs
+
+### Request Timeouts
+
+- **Default**: 30 seconds per request (configurable via `security.requestTimeoutMs`)
+- **Response**: HTTP 408 with JSON error body
+- **SSE streams**: Max 1-hour connection lifetime with automatic cleanup
+- **Server-level**: `keepAliveTimeout` 65s, `headersTimeout` 66s
 
 ---
 
@@ -326,3 +335,48 @@ Every state-changing operation produces an audit entry with:
 - Requires `audit:read` permission (auditor or admin role)
 
 See [COMPLIANCE_PACK.md](COMPLIANCE_PACK.md) for detailed control mappings to SOC 2, ISO 27001, and NIST CSF.
+
+---
+
+## 11. Production Hardening
+
+### 11.1 Process Resilience
+
+- **Uncaught exceptions**: Logged to console and audit trail; non-fatal errors do not crash the process
+- **Unhandled rejections**: Logged to console and audit trail
+- **Graceful shutdown**: SIGTERM/SIGINT trigger snapshot flush, connection draining (3s grace), and clean exit
+- **Double-shutdown prevention**: Guard flag prevents concurrent shutdown sequences
+
+### 11.2 Memory Bounds
+
+All in-memory collections are bounded to prevent OOM:
+
+| Collection | Location | Cap | Eviction Strategy |
+|------------|----------|-----|-------------------|
+| In-memory events | `events.js` | 500K events | Oldest evicted (FIFO), persisted on disk |
+| Usage ring buffer | `index.js` | 100K entries | Oldest evicted (FIFO) |
+| Canary deployments | `server.js` | 100 entries | Expired entries evicted on insert |
+| Approval requests | `governance-routes.js` | 1K entries | Expired/completed entries evicted on insert |
+| Pending commands | `fleet-routes.js` | 50/node | Rejected at capacity; empty nodes evicted |
+| Auth rate limits | `auth-routes.js` | 10K IPs | Expired entries evicted on insert |
+| Push subscriptions | `ops-routes.js` | 1K entries | Rejected at capacity |
+| Health history | `ops-routes.js` | 17,280 entries | Oldest evicted (24h at 5s interval) |
+| Cron history | `ops-routes.js` | 200 entries | Oldest spliced |
+
+### 11.3 Data Integrity
+
+- **Serialized JSONL writes**: Async write queue prevents data corruption under concurrent event ingestion
+- **Symlink-aware path checks**: Both `sanitizePath()` and `serveStatic()` resolve symlinks via `fs.realpathSync()` before allowlist comparison
+- **ReDoS protection**: Policy regex patterns are length-limited (200 chars), checked for dangerous constructs (nested quantifiers), and cached after compilation
+
+### 11.4 Connection Management
+
+- **Connection tracking**: All TCP connections are tracked in a Set for graceful shutdown
+- **SSE cleanup**: Streams have max 1-hour lifetime, cleanup on error, and keepalive failure detection
+- **Keep-alive timeout**: Server-level `keepAliveTimeout` (65s) and `headersTimeout` (66s) prevent connection leaks
+
+### 11.5 Health Probes
+
+- **Unauthenticated**: `/healthz` and `/api/healthz` respond without session cookies
+- **Response**: `{"status":"ok","uptime":<seconds>}`
+- **Use case**: Load balancer health checks, Kubernetes liveness/readiness probes, monitoring systems
