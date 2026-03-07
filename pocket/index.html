@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0a0a0f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>ClawCC Pocket</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --bg2: #12121a;
+      --glass: rgba(255,255,255,0.05);
+      --border: rgba(255,255,255,0.08);
+      --text: #e4e4e7;
+      --text2: #a1a1aa;
+      --muted: #71717a;
+      --accent: #6366f1;
+      --green: #22c55e;
+      --yellow: #f59e0b;
+      --red: #ef4444;
+      --blue: #3b82f6;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, system-ui, sans-serif; min-height: 100vh; overflow-x: hidden; }
+    .topbar { position: fixed; top: 0; left: 0; right: 0; height: 52px; background: var(--bg2); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; z-index: 100; backdrop-filter: blur(20px); }
+    .topbar h1 { font-size: 1rem; font-weight: 600; }
+    .topbar .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); display: inline-block; margin-right: 8px; }
+    .content { margin-top: 52px; margin-bottom: 60px; padding: 12px; }
+    .bottomnav { position: fixed; bottom: 0; left: 0; right: 0; height: 56px; background: var(--bg2); border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; z-index: 100; }
+    .bottomnav button { background: none; border: none; color: var(--muted); font-size: 0.7rem; display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; padding: 4px 12px; }
+    .bottomnav button.active { color: var(--accent); }
+    .bottomnav button svg { width: 22px; height: 22px; }
+    .card { background: var(--glass); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; backdrop-filter: blur(20px); }
+    .card h3 { font-size: 0.85rem; color: var(--text2); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat { font-size: 1.8rem; font-weight: 700; }
+    .stat-row { display: flex; gap: 12px; }
+    .stat-row .card { flex: 1; }
+    .badge { padding: 2px 8px; border-radius: 99px; font-size: 0.7rem; font-weight: 500; }
+    .badge-on { background: rgba(34,197,94,0.15); color: var(--green); }
+    .badge-off { background: rgba(239,68,68,0.15); color: var(--red); }
+    .badge-warn { background: rgba(245,158,11,0.15); color: var(--yellow); }
+    .feed-item { padding: 10px 12px; border-left: 3px solid var(--blue); margin-bottom: 6px; background: var(--glass); border-radius: 0 8px 8px 0; font-size: 0.82rem; }
+    .feed-item.error { border-left-color: var(--red); }
+    .feed-item.warning { border-left-color: var(--yellow); }
+    .feed-item.critical { border-left-color: var(--red); background: rgba(239,68,68,0.05); }
+    .feed-item .time { color: var(--muted); font-size: 0.7rem; font-family: monospace; }
+    .feed-item .type { color: var(--accent); font-weight: 500; }
+    .alert-list .alert { padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+    .alert.critical { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); }
+    .alert.warning { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2); }
+    .emergency-btn { width: 100%; padding: 14px; border: 2px solid var(--red); background: rgba(239,68,68,0.1); color: var(--red); border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 16px; }
+    .emergency-btn:active { background: rgba(239,68,68,0.3); }
+    .stepup-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 200; }
+    .stepup-modal .modal-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 24px; width: 90%; max-width: 360px; }
+    .stepup-modal input { width: 100%; padding: 12px; background: var(--glass); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 1.2rem; text-align: center; letter-spacing: 8px; margin: 16px 0; }
+    .stepup-modal .confirm-btn { width: 100%; padding: 12px; background: var(--red); color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; }
+    .login-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .login-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 32px; width: 90%; max-width: 360px; }
+    .login-card h2 { text-align: center; margin-bottom: 24px; }
+    .login-card input { width: 100%; padding: 12px; background: var(--glass); border: 1px solid var(--border); border-radius: 8px; color: var(--text); margin-bottom: 12px; font-size: 1rem; }
+    .login-card button { width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; }
+    .hidden { display: none !important; }
+    .node-list .node { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid var(--border); }
+    .node-list .node:last-child { border-bottom: none; }
+    @media (prefers-color-scheme: dark) { :root { color-scheme: dark; } }
+  </style>
+</head>
+<body>
+  <div id="login-screen" class="login-screen">
+    <div class="login-card">
+      <h2>ClawCC Pocket</h2>
+      <input type="text" id="login-user" placeholder="Username" autocomplete="username">
+      <input type="password" id="login-pass" placeholder="Password" autocomplete="current-password">
+      <div id="login-mfa" class="hidden">
+        <input type="text" id="login-mfa-code" placeholder="MFA Code" inputmode="numeric" maxlength="6">
+      </div>
+      <button onclick="doLogin()">Sign In</button>
+      <p id="login-error" style="color:var(--red);text-align:center;margin-top:12px;font-size:0.85rem;"></p>
+    </div>
+  </div>
+
+  <div id="app" class="hidden">
+    <div class="topbar">
+      <div><span class="status-dot" id="conn-dot"></span><h1 style="display:inline">ClawCC</h1></div>
+      <span id="topbar-info" style="color:var(--muted);font-size:0.8rem;"></span>
+    </div>
+
+    <div class="content" id="page-content"></div>
+
+    <nav class="bottomnav">
+      <button class="active" data-page="dashboard" onclick="navigate('dashboard')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Overview
+      </button>
+      <button data-page="feed" onclick="navigate('feed')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 11a9 9 0 019 9M4 4a16 16 0 0116 16"/><circle cx="5" cy="19" r="1"/></svg>
+        Feed
+      </button>
+      <button data-page="nodes" onclick="navigate('nodes')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><circle cx="6" cy="6" r="1"/><circle cx="6" cy="18" r="1"/></svg>
+        Nodes
+      </button>
+      <button data-page="alerts" onclick="navigate('alerts')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Alerts
+      </button>
+      <button data-page="emergency" onclick="navigate('emergency')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        Kill
+      </button>
+    </nav>
+  </div>
+
+  <div id="stepup-modal" class="stepup-modal hidden">
+    <div class="modal-card">
+      <h3 style="text-align:center;margin-bottom:8px;">Step-Up Authentication</h3>
+      <p style="color:var(--text2);text-align:center;font-size:0.85rem;">Enter your MFA code to confirm this action</p>
+      <input type="text" id="stepup-code" inputmode="numeric" maxlength="6" placeholder="000000">
+      <button class="confirm-btn" id="stepup-confirm">Confirm</button>
+      <button style="width:100%;padding:10px;background:none;border:1px solid var(--border);border-radius:8px;color:var(--text2);margin-top:8px;cursor:pointer;" onclick="hideStepUp()">Cancel</button>
+    </div>
+  </div>
+
+  <script>
+    'use strict';
+    const BASE = location.origin;
+    let currentUser = null;
+    let feedSource = null;
+    let feedItems = [];
+
+    async function api(method, path, body) {
+      const opts = { method, headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin' };
+      if (body) opts.body = JSON.stringify(body);
+      const res = await fetch(BASE + path, opts);
+      return res.json();
+    }
+
+    async function doLogin() {
+      const user = document.getElementById('login-user').value;
+      const pass = document.getElementById('login-pass').value;
+      const err = document.getElementById('login-error');
+      err.textContent = '';
+      const res = await api('POST', '/api/auth/login', { username: user, password: pass });
+      if (res.requiresMfa) {
+        document.getElementById('login-mfa').classList.remove('hidden');
+        document.getElementById('login-mfa-code').focus();
+        const mfaBtn = document.querySelector('.login-card button');
+        mfaBtn.onclick = async () => {
+          const code = document.getElementById('login-mfa-code').value;
+          const mfaRes = await api('POST', '/api/auth/mfa/verify', { code });
+          if (mfaRes.success) { await initApp(); }
+          else { err.textContent = 'Invalid MFA code'; }
+        };
+      } else if (res.success) {
+        await initApp();
+      } else {
+        err.textContent = res.error || 'Login failed';
+      }
+    }
+
+    async function initApp() {
+      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('app').classList.remove('hidden');
+      try {
+        const me = await api('GET', '/api/auth/me');
+        currentUser = me.user || me;
+        document.getElementById('topbar-info').textContent = currentUser.username || '';
+      } catch (e) { /* ignore */ }
+      navigate('dashboard');
+    }
+
+    function navigate(page) {
+      document.querySelectorAll('.bottomnav button').forEach(b => {
+        b.classList.toggle('active', b.dataset.page === page);
+      });
+      const pages = { dashboard: renderDashboard, feed: renderFeed, nodes: renderNodes, alerts: renderAlerts, emergency: renderEmergency };
+      if (feedSource && page !== 'feed') { feedSource.close(); feedSource = null; }
+      (pages[page] || renderDashboard)();
+    }
+
+    async function renderDashboard() {
+      const el = document.getElementById('page-content');
+      el.innerHTML = '<div class="stat-row"><div class="card"><h3>Nodes</h3><div class="stat" id="d-nodes">--</div></div><div class="card"><h3>Sessions</h3><div class="stat" id="d-sessions">--</div></div></div><div class="stat-row"><div class="card"><h3>Cost Today</h3><div class="stat" id="d-cost">--</div></div><div class="card"><h3>Alerts</h3><div class="stat" id="d-alerts">--</div></div></div><div class="card"><h3>Recent Events</h3><div id="d-feed"></div></div>';
+      try {
+        const [health, sessions] = await Promise.all([api('GET', '/api/ops/health'), api('GET', '/api/sessions')]);
+        const nodes = health.nodes ? Object.keys(health.nodes).length : 0;
+        const online = health.nodes ? Object.values(health.nodes).filter(n => n.status === 'online').length : 0;
+        document.getElementById('d-nodes').textContent = online + '/' + nodes;
+        const sessList = sessions.sessions ? Object.keys(sessions.sessions) : [];
+        const active = sessions.sessions ? Object.values(sessions.sessions).filter(s => s.status === 'active').length : 0;
+        document.getElementById('d-sessions').textContent = active + '/' + sessList.length;
+      } catch (e) {
+        document.getElementById('d-nodes').textContent = 'N/A';
+      }
+    }
+
+    function renderFeed() {
+      const el = document.getElementById('page-content');
+      el.innerHTML = '<h3 style="margin-bottom:12px;color:var(--text2);">Live Feed</h3><div id="feed-list"></div>';
+      feedItems = [];
+      try {
+        feedSource = new EventSource(BASE + '/api/events/stream');
+        feedSource.onmessage = (e) => {
+          try {
+            const data = JSON.parse(e.data);
+            feedItems.unshift(data);
+            if (feedItems.length > 100) feedItems.pop();
+            const list = document.getElementById('feed-list');
+            if (!list) return;
+            const sev = data.severity || 'info';
+            const item = document.createElement('div');
+            item.className = 'feed-item ' + sev;
+            item.innerHTML = '<span class="time">' + (data.ts || '').slice(11, 19) + '</span> <span class="type">' + (data.type || '') + '</span> ' + (data.nodeId || '') + ' ' + ((data.payload && data.payload.preview) || '');
+            list.prepend(item);
+            while (list.children.length > 50) list.removeChild(list.lastChild);
+          } catch (err) { /* ignore parse errors */ }
+        };
+      } catch (e) { /* SSE not available */ }
+    }
+
+    async function renderNodes() {
+      const el = document.getElementById('page-content');
+      el.innerHTML = '<h3 style="margin-bottom:12px;color:var(--text2);">Fleet Nodes</h3><div class="card node-list" id="node-list">Loading...</div>';
+      try {
+        const res = await api('GET', '/api/fleet/nodes');
+        const nodes = res.nodes || res;
+        const list = document.getElementById('node-list');
+        if (typeof nodes === 'object' && !Array.isArray(nodes)) {
+          list.innerHTML = Object.entries(nodes).map(([id, n]) =>
+            '<div class="node"><div><strong>' + (n.hostname || id) + '</strong><br><span style="color:var(--muted);font-size:0.8rem;">' + (n.tags || []).join(', ') + '</span></div><span class="badge ' + (n.status === 'online' ? 'badge-on' : 'badge-off') + '">' + (n.status || 'unknown') + '</span></div>'
+          ).join('');
+        } else {
+          list.innerHTML = '<p style="color:var(--muted)">No nodes registered</p>';
+        }
+      } catch (e) { document.getElementById('node-list').textContent = 'Failed to load'; }
+    }
+
+    async function renderAlerts() {
+      const el = document.getElementById('page-content');
+      el.innerHTML = '<h3 style="margin-bottom:12px;color:var(--text2);">Alerts & Violations</h3><div class="card" style="margin-bottom:12px;"><h3>Push Notifications</h3><p style="color:var(--text2);font-size:0.85rem;margin-bottom:10px;" id="notif-status">Status: checking...</p><button id="notif-btn" style="width:100%;padding:10px;background:var(--accent);color:white;border:none;border-radius:8px;font-size:0.9rem;cursor:pointer;" onclick="enableNotifications()">Enable Notifications</button></div><div class="alert-list" id="alert-list">Loading...</div>';
+      updateNotifStatus();
+      try {
+        const res = await api('GET', '/api/events/query?type=policy.violation&limit=20');
+        const events = res.events || [];
+        const list = document.getElementById('alert-list');
+        if (events.length === 0) {
+          list.innerHTML = '<p style="color:var(--muted);text-align:center;padding:24px;">No recent alerts</p>';
+          return;
+        }
+        list.innerHTML = events.map(e =>
+          '<div class="alert ' + (e.severity || 'warning') + '"><div><strong>' + ((e.payload && e.payload.ruleId) || e.type) + '</strong><br><span style="color:var(--muted);font-size:0.8rem;">' + (e.ts || '').slice(0, 19).replace('T', ' ') + ' | ' + (e.nodeId || '') + '</span><br><span style="font-size:0.85rem;">' + ((e.payload && e.payload.reason) || '') + '</span></div></div>'
+        ).join('');
+      } catch (e) { document.getElementById('alert-list').textContent = 'Failed to load'; }
+    }
+
+    function renderEmergency() {
+      const el = document.getElementById('page-content');
+      const isAdmin = currentUser && (currentUser.role === 'ADMIN' || currentUser.role === 'OPERATOR');
+      el.innerHTML = '<h3 style="margin-bottom:12px;color:var(--text2);">Emergency Actions</h3>' +
+        (isAdmin ? '<div class="card"><h3>Kill Session</h3><input type="text" id="kill-sess-id" placeholder="Session ID" style="width:100%;padding:10px;background:var(--glass);border:1px solid var(--border);border-radius:8px;color:var(--text);margin-bottom:8px;"><button class="emergency-btn" onclick="doKill(\'session\')">Kill Session</button></div>' +
+        '<div class="card"><h3>Kill Node</h3><input type="text" id="kill-node-id" placeholder="Node ID" style="width:100%;padding:10px;background:var(--glass);border:1px solid var(--border);border-radius:8px;color:var(--text);margin-bottom:8px;"><button class="emergency-btn" onclick="doKill(\'node\')">Kill All on Node</button></div>' +
+        '<div class="card"><h3>Global Kill Switch</h3><p style="color:var(--text2);font-size:0.85rem;margin-bottom:12px;">Terminate all active sessions across the entire fleet.</p><button class="emergency-btn" style="border-color:var(--red);background:rgba(239,68,68,0.2);" onclick="doKill(\'global\')">GLOBAL KILL</button></div>'
+        : '<div class="card"><p style="color:var(--muted);text-align:center;">Emergency actions require Operator or Admin role.</p></div>');
+    }
+
+    let pendingKillAction = null;
+    function doKill(type) {
+      pendingKillAction = type;
+      document.getElementById('stepup-modal').classList.remove('hidden');
+      document.getElementById('stepup-code').value = '';
+      document.getElementById('stepup-code').focus();
+    }
+
+    function hideStepUp() {
+      document.getElementById('stepup-modal').classList.add('hidden');
+      pendingKillAction = null;
+    }
+
+    document.getElementById('stepup-confirm').onclick = async () => {
+      const code = document.getElementById('stepup-code').value;
+      if (!code || code.length < 6) return;
+      const stepRes = await api('POST', '/api/auth/step-up', { code });
+      if (!stepRes.success) { alert('Step-up auth failed'); return; }
+
+      let res;
+      if (pendingKillAction === 'session') {
+        const id = document.getElementById('kill-sess-id').value;
+        res = await api('POST', '/api/kill/session/' + id);
+      } else if (pendingKillAction === 'node') {
+        const id = document.getElementById('kill-node-id').value;
+        res = await api('POST', '/api/kill/node/' + id);
+      } else if (pendingKillAction === 'global') {
+        res = await api('POST', '/api/kill/global');
+      }
+      hideStepUp();
+      alert(res && res.success ? 'Kill command sent' : 'Action failed: ' + ((res && res.error) || 'unknown'));
+    };
+
+    function updateNotifStatus() {
+      const statusEl = document.getElementById('notif-status');
+      const btnEl = document.getElementById('notif-btn');
+      if (!statusEl || !btnEl) return;
+      if (!('Notification' in window)) {
+        statusEl.textContent = 'Status: not supported in this browser';
+        btnEl.style.display = 'none';
+      } else if (Notification.permission === 'granted') {
+        statusEl.textContent = 'Status: enabled';
+        btnEl.textContent = 'Test Notification';
+        btnEl.onclick = testNotification;
+      } else if (Notification.permission === 'denied') {
+        statusEl.textContent = 'Status: blocked (update browser settings)';
+        btnEl.style.display = 'none';
+      } else {
+        statusEl.textContent = 'Status: not enabled';
+        btnEl.textContent = 'Enable Notifications';
+      }
+    }
+
+    async function enableNotifications() {
+      if (!('Notification' in window)) return;
+      const perm = await Notification.requestPermission();
+      if (perm === 'granted') {
+        try {
+          const reg = await navigator.serviceWorker.ready;
+          const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: null });
+          const subJson = sub.toJSON();
+          await api('POST', '/api/ops/notifications/subscribe', subJson);
+        } catch (e) {
+          // Push subscription may not be available without VAPID keys; store permission locally
+          localStorage.setItem('clawcc-notif', 'enabled');
+        }
+      }
+      updateNotifStatus();
+    }
+
+    async function testNotification() {
+      try {
+        await api('POST', '/api/ops/notifications/test');
+        if (Notification.permission === 'granted') {
+          new Notification('ClawCC Alert', { body: 'Test notification from ClawCC Pocket', tag: 'clawcc-test' });
+        }
+      } catch (e) { /* ignore */ }
+    }
+
+    (async () => {
+      try {
+        const me = await api('GET', '/api/auth/me');
+        if (me.success !== false && (me.user || me.username)) { await initApp(); }
+      } catch (e) { /* show login */ }
+    })();
+  </script>
+</body>
+</html>

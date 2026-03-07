@@ -1,0 +1,73 @@
+{
+  "id": "default-baseline",
+  "name": "Baseline Safety Policy",
+  "description": "Default policy enforcing basic safety guardrails for all sessions and actions",
+  "version": "1.0.0",
+  "enabled": true,
+  "priority": 100,
+  "rules": [
+    {
+      "id": "drift-warn",
+      "description": "Warn when drift score exceeds threshold",
+      "condition": { "type": "drift", "field": "score", "operator": "gte", "value": 30 },
+      "enforcement": "warn",
+      "message": "Session drift score is elevated. Review session activity."
+    },
+    {
+      "id": "drift-approve",
+      "description": "Require approval when drift is high",
+      "condition": { "type": "drift", "field": "score", "operator": "gte", "value": 60 },
+      "enforcement": "approve",
+      "message": "Session drift score is high. Manual approval required to continue."
+    },
+    {
+      "id": "drift-kill",
+      "description": "Kill session when drift is critical",
+      "condition": { "type": "drift", "field": "score", "operator": "gte", "value": 95 },
+      "enforcement": "kill",
+      "message": "Session drift score is critical. Session terminated."
+    },
+    {
+      "id": "cost-warn",
+      "description": "Warn when session cost exceeds $5",
+      "condition": { "type": "session", "field": "cost", "operator": "gte", "value": 5.0 },
+      "enforcement": "warn",
+      "message": "Session cost has exceeded $5.00."
+    },
+    {
+      "id": "cost-throttle",
+      "description": "Throttle when session cost exceeds $25",
+      "condition": { "type": "session", "field": "cost", "operator": "gte", "value": 25.0 },
+      "enforcement": "throttle",
+      "message": "Session cost has exceeded $25.00. Throttling enabled."
+    },
+    {
+      "id": "error-burst",
+      "description": "Quarantine on error burst (>10 errors in session)",
+      "condition": { "type": "session", "field": "errors", "operator": "gte", "value": 10 },
+      "enforcement": "quarantine",
+      "message": "Too many errors in session. Session quarantined for review."
+    },
+    {
+      "id": "forbidden-path",
+      "description": "Block access to forbidden paths",
+      "condition": { "type": "event", "field": "payload.path", "operator": "matches", "value": "^(/etc/shadow|~/.ssh|~/.aws)" },
+      "enforcement": "kill",
+      "message": "Access to forbidden path detected. Session terminated."
+    },
+    {
+      "id": "tripwire-response",
+      "description": "Quarantine on tripwire trigger",
+      "condition": { "type": "event", "field": "type", "operator": "eq", "value": "tripwire.triggered" },
+      "enforcement": "quarantine",
+      "message": "Tripwire triggered. Session quarantined and evidence preserved."
+    },
+    {
+      "id": "prod-write-approval",
+      "description": "Require approval for writes to production-tagged nodes",
+      "condition": { "type": "action", "field": "tags", "operator": "contains", "value": "prod" },
+      "enforcement": "approve",
+      "message": "Write action on production node requires approval."
+    }
+  ]
+}

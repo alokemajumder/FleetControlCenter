@@ -1,0 +1,24 @@
+{
+  "name": "clawcc",
+  "version": "0.1.0",
+  "description": "ClawCC - OpenClaw Fleet Control Center",
+  "private": true,
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node control-plane/server.js",
+    "agent": "node node-agent/agent.js",
+    "test": "node test/run-all.js",
+    "cli": "node cli/clawcc.js",
+    "keygen": "node cli/clawcc.js keygen",
+    "init": "node cli/clawcc.js init"
+  },
+  "keywords": [
+    "fleet-management",
+    "control-plane",
+    "agent-monitoring",
+    "security"
+  ],
+  "license": "MIT"
+}

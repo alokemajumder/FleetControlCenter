@@ -1,0 +1,10 @@
+node_modules/
+data/
+node-data/
+*.log
+.env
+*.pem
+*.key
+*.pub
+clawcc.config.json
+node-agent.config.json

@@ -1,0 +1,13 @@
+{
+  "nodeId": "",
+  "controlPlaneUrl": "http://localhost:3400",
+  "nodeSecret": "CHANGE_ME_TO_A_STRONG_SECRET",
+  "tags": ["dev"],
+  "discoveryPaths": ["~/.claude"],
+  "telemetryIntervalMs": 5000,
+  "heartbeatIntervalMs": 15000,
+  "dataDir": "./node-data",
+  "allowlistsDir": "../allowlists",
+  "spoolDir": "./node-data/spool",
+  "logLevel": "info"
+}

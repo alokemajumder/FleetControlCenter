@@ -1,0 +1,69 @@
+{
+  "_comment": "Allowed commands for safe action execution",
+  "commands": {
+    "restart-openclaw": {
+      "command": "systemctl",
+      "allowedArgs": ["restart", "openclaw"],
+      "timeout": 30000,
+      "requiresApproval": true,
+      "riskLevel": "high",
+      "description": "Restart the OpenClaw service"
+    },
+    "restart-clawcc-agent": {
+      "command": "systemctl",
+      "allowedArgs": ["restart", "clawcc-agent"],
+      "timeout": 30000,
+      "requiresApproval": false,
+      "riskLevel": "medium",
+      "description": "Restart the ClawCC node agent"
+    },
+    "tailscale-status": {
+      "command": "tailscale",
+      "allowedArgs": ["status", "--json"],
+      "timeout": 10000,
+      "requiresApproval": false,
+      "riskLevel": "low",
+      "description": "Get Tailscale network status"
+    },
+    "list-cron": {
+      "command": "crontab",
+      "allowedArgs": ["-l"],
+      "timeout": 5000,
+      "requiresApproval": false,
+      "riskLevel": "low",
+      "description": "List current user crontab"
+    },
+    "disk-usage": {
+      "command": "df",
+      "allowedArgs": ["-h"],
+      "timeout": 5000,
+      "requiresApproval": false,
+      "riskLevel": "low",
+      "description": "Show disk usage"
+    },
+    "process-list": {
+      "command": "ps",
+      "allowedArgs": ["aux"],
+      "timeout": 5000,
+      "requiresApproval": false,
+      "riskLevel": "low",
+      "description": "List running processes"
+    },
+    "rotate-logs": {
+      "command": "logrotate",
+      "allowedArgs": ["--force", "/etc/logrotate.d/clawcc"],
+      "timeout": 15000,
+      "requiresApproval": false,
+      "riskLevel": "medium",
+      "description": "Force log rotation for ClawCC"
+    },
+    "git-log": {
+      "command": "git",
+      "allowedArgs": ["log", "--oneline", "-20"],
+      "timeout": 5000,
+      "requiresApproval": false,
+      "riskLevel": "low",
+      "description": "Show recent git commits"
+    }
+  }
+}

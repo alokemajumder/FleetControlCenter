@@ -1,0 +1,21 @@
+{
+  "name": "ClawCC Pocket",
+  "short_name": "ClawCC",
+  "start_url": "/pocket/",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#0a0a0f",
+  "description": "Mobile operations console for ClawCC Fleet Control Center",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

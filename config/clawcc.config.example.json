@@ -1,0 +1,59 @@
+{
+  "mode": "local",
+  "host": "0.0.0.0",
+  "port": 3400,
+  "dataDir": "./data",
+  "httpsEnabled": false,
+  "httpsKeyPath": "",
+  "httpsCertPath": "",
+  "allowInsecureNonLocalhost": false,
+  "sessionSecret": "CHANGE_ME_GENERATE_WITH_openssl_rand_hex_32",
+  "adminKeyPublic": "",
+  "adminKeyPrivate": "",
+  "auth": {
+    "sessionTtlMs": 86400000,
+    "lockoutAttempts": 5,
+    "lockoutDurationMs": 900000,
+    "stepUpWindowMs": 300000,
+    "pbkdf2Iterations": 600000
+  },
+  "fleet": {
+    "heartbeatTimeoutMs": 60000,
+    "maxNodes": 100
+  },
+  "events": {
+    "maxPayloadBytes": 65536,
+    "snapshotIntervalMs": 60000,
+    "retentionDays": 90
+  },
+  "audit": {
+    "retentionDays": 365,
+    "rotationEnabled": true
+  },
+  "security": {
+    "rateLimitWindowMs": 60000,
+    "rateLimitMaxRequests": 100,
+    "authRateLimitMaxRequests": 10,
+    "csrfEnabled": true,
+    "corsOrigins": []
+  },
+  "tailscale": {
+    "enabled": true,
+    "statusCommand": "tailscale status --json"
+  },
+  "discovery": {
+    "paths": ["~/.claude"],
+    "intervalMs": 30000
+  },
+  "skills": {
+    "registryPath": "./skills/registry.json",
+    "requireSigned": true,
+    "canaryPercentage": 10
+  },
+  "alerts": {
+    "costPerHour": 5.00,
+    "tokensPerHour": 100000,
+    "errorRateThreshold": 0.10,
+    "enabled": true
+  }
+}

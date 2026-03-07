@@ -1,0 +1,22 @@
+{
+  "_comment": "Filesystem path allowlists",
+  "allowed": [
+    "~/.claude",
+    "~/.config/claude",
+    "/var/log/clawcc",
+    "/var/log/openclaw",
+    "/tmp/clawcc"
+  ],
+  "protected": [
+    "~/.claude/CLAUDE.md",
+    "~/.claude/settings.json",
+    "~/.claude/credentials.json"
+  ],
+  "forbidden": [
+    "~/.ssh",
+    "~/.gnupg",
+    "~/.aws",
+    "/etc/shadow",
+    "/etc/passwd"
+  ]
+}

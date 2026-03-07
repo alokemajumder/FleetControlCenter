@@ -1,0 +1,22 @@
+{
+  "_comment": "Signed skills registry",
+  "skills": [
+    {
+      "id": "skill-code-review",
+      "name": "Code Review",
+      "version": "1.0.0",
+      "description": "Automated code review skill using configured LLM provider",
+      "entrypoint": "skills/code-review/run.js",
+      "signature": "",
+      "signedBy": "",
+      "deployedAt": "",
+      "status": "draft",
+      "canaryNodes": [],
+      "rollbackOnDrift": 80,
+      "rollbackOnErrorRate": 0.1
+    }
+  ],
+  "requireSignature": true,
+  "canaryPercentage": 10,
+  "autoRollbackEnabled": true
+}

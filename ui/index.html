@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ClawCC - Fleet Control Center</title>
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside id="sidebar">
+    <div class="logo">
+      <div class="logo-icon">C</div>
+      <span>ClawCC</span>
+    </div>
+    <nav>
+      <a href="#" data-page="fleet" class="active">
+        <span>Fleet</span>
+        <span class="shortcut">1</span>
+      </a>
+      <a href="#" data-page="sessions">
+        <span>Sessions</span>
+        <span class="shortcut">2</span>
+      </a>
+      <a href="#" data-page="livefeed">
+        <span>Live Feed</span>
+        <span class="shortcut">3</span>
+      </a>
+      <a href="#" data-page="usage">
+        <span>Usage</span>
+        <span class="shortcut">4</span>
+      </a>
+      <a href="#" data-page="memory">
+        <span>Memory &amp; Files</span>
+        <span class="shortcut">5</span>
+      </a>
+      <a href="#" data-page="ops">
+        <span>Ops</span>
+        <span class="shortcut">6</span>
+      </a>
+      <a href="#" data-page="governance">
+        <span>Governance</span>
+        <span class="shortcut">7</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      Press <kbd>?</kbd> for shortcuts
+    </div>
+  </aside>
+
+  <!-- Topbar -->
+  <header id="topbar">
+    <div class="topbar-left">
+      <span class="topbar-title">Fleet</span>
+      <div class="search-wrapper">
+        <span class="search-icon">/</span>
+        <input type="text" id="search-input" placeholder="Search... (/)" autocomplete="off">
+      </div>
+    </div>
+    <div class="topbar-right">
+      <button class="notification-bell" title="Notifications">
+        &#x1F514;
+        <span class="bell-dot"></span>
+      </button>
+      <div class="user-menu">
+        <button class="user-menu-btn">
+          <span class="avatar">U</span>
+          <span class="user-name">User</span>
+        </button>
+        <div class="user-dropdown">
+          <button id="user-change-password">Change Password</button>
+          <button id="user-mfa-setup">Setup MFA</button>
+          <div class="divider"></div>
+          <button id="user-logout" class="danger">Sign Out</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main id="content"></main>
+
+  <!-- Modal Backdrop -->
+  <div class="modal-backdrop" id="modal-backdrop"></div>
+
+  <!-- Keyboard Help Overlay -->
+  <div id="keyboard-help-overlay">
+    <div class="keyboard-help-card">
+      <h2>Keyboard Shortcuts</h2>
+      <ul class="shortcut-list">
+        <li><span>Fleet</span><kbd>1</kbd></li>
+        <li><span>Sessions</span><kbd>2</kbd></li>
+        <li><span>Live Feed</span><kbd>3</kbd></li>
+        <li><span>Usage</span><kbd>4</kbd></li>
+        <li><span>Memory & Files</span><kbd>5</kbd></li>
+        <li><span>Ops</span><kbd>6</kbd></li>
+        <li><span>Governance</span><kbd>7</kbd></li>
+        <li><span>Search</span><kbd>/</kbd></li>
+        <li><span>Pause / Resume Live Feed</span><kbd>Space</kbd></li>
+        <li><span>Close Panel / Modal</span><kbd>Esc</kbd></li>
+        <li><span>Kill Switch (Admin)</span><kbd>k</kbd></li>
+        <li><span>This Help</span><kbd>?</kbd></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container"></div>
+
+  <!-- Scripts (order matters) -->
+  <script src="js/api.js"></script>
+  <script src="js/sse.js"></script>
+  <script src="js/pages.js"></script>
+  <script src="js/app.js"></script>
+
+  <!-- Sidebar navigation click handler -->
+  <script>
+    document.querySelectorAll('#sidebar nav a').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const page = link.dataset.page;
+        if (page && App.pages[page]) App.navigateTo(page);
+      });
+    });
+  </script>
+
+</body>
+</html>

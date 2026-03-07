@@ -1,0 +1,45 @@
+{
+  "_comment": "Tripwires / honeytokens configuration",
+  "tripwires": [
+    {
+      "id": "tw-secret-env",
+      "type": "path",
+      "target": "/tmp/clawcc-canary/.env.production",
+      "description": "Canary environment file. No legitimate process should access this.",
+      "severity": "critical",
+      "action": "quarantine"
+    },
+    {
+      "id": "tw-honeypot-key",
+      "type": "path",
+      "target": "/tmp/clawcc-canary/api-key.txt",
+      "description": "Honeypot API key file. Access indicates credential harvesting.",
+      "severity": "critical",
+      "action": "quarantine"
+    },
+    {
+      "id": "tw-canary-url",
+      "type": "url",
+      "target": "https://canary.clawcc.internal/token",
+      "description": "Canary URL. Any outbound request to this triggers alert.",
+      "severity": "high",
+      "action": "quarantine"
+    },
+    {
+      "id": "tw-secret-string",
+      "type": "secret",
+      "target": "CLAWCC_CANARY_TOKEN_DO_NOT_USE_xK9mP2nQ",
+      "description": "Canary secret string. If this appears in any tool output, trigger.",
+      "severity": "critical",
+      "action": "quarantine"
+    },
+    {
+      "id": "tw-admin-path",
+      "type": "path",
+      "target": "/etc/clawcc/admin-override.conf",
+      "description": "Fake admin override config. Access indicates privilege escalation attempt.",
+      "severity": "critical",
+      "action": "kill"
+    }
+  ]
+}
