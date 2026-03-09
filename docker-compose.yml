@@ -1,0 +1,14 @@
+services:
+  clawcc:
+    build: .
+    ports:
+      - "3400:3400"
+    volumes:
+      - clawcc-data:/data
+      - ./clawcc.config.json:/app/clawcc.config.json:ro
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+
+volumes:
+  clawcc-data:

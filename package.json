@@ -1,8 +1,17 @@
 {
   "name": "clawcc",
   "version": "0.1.0",
-  "description": "ClawCC - OpenClaw Fleet Control Center",
-  "private": true,
+  "description": "Self-hosted control plane for AI agent fleet management. Pure Node.js, zero dependencies.",
+  "author": "Aloke Majumder",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alokemajumder/clawcc.git"
+  },
+  "bugs": {
+    "url": "https://github.com/alokemajumder/clawcc/issues"
+  },
+  "homepage": "https://github.com/alokemajumder/clawcc",
   "engines": {
     "node": ">=18.0.0"
   },
@@ -10,15 +19,28 @@
     "start": "node control-plane/server.js",
     "agent": "node node-agent/agent.js",
     "test": "node test/run-all.js",
+    "test:e2e": "node test/e2e-smoke.js",
+    "test:all": "node test/run-all.js && node test/e2e-smoke.js",
     "cli": "node cli/clawcc.js",
     "keygen": "node cli/clawcc.js keygen",
-    "init": "node cli/clawcc.js init"
+    "init": "node cli/clawcc.js init",
+    "demo": "node scripts/generate-demo-data.js"
   },
   "keywords": [
+    "ai-agents",
     "fleet-management",
     "control-plane",
-    "agent-monitoring",
-    "security"
-  ],
-  "license": "MIT"
+    "monitoring",
+    "security",
+    "audit-trail",
+    "compliance",
+    "self-hosted",
+    "zero-dependencies",
+    "drift-detection",
+    "policy-engine",
+    "rbac",
+    "mfa",
+    "event-sourcing",
+    "sse"
+  ]
 }

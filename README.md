@@ -591,39 +591,21 @@ server {
 
 ### Production (Docker)
 
-```dockerfile
-# Dockerfile
-FROM node:20-slim
-WORKDIR /app
-COPY . .
-RUN mkdir -p /data
-EXPOSE 3400
-HEALTHCHECK --interval=30s --timeout=5s \
-  CMD node -e "require('http').get('http://localhost:3400/healthz', r => { process.exit(r.statusCode === 200 ? 0 : 1) })"
-CMD ["node", "control-plane/server.js"]
-```
-
-```yaml
-# docker-compose.yml
-services:
-  clawcc:
-    build: .
-    ports:
-      - "3400:3400"
-    volumes:
-      - clawcc-data:/data
-      - ./clawcc.config.json:/app/clawcc.config.json:ro
-    restart: always
-    environment:
-      - NODE_ENV=production
-
-volumes:
-  clawcc-data:
-```
+A `Dockerfile` and `docker-compose.yml` are included in the repository.
 
 ```bash
+# Create your config first
+cp config/clawcc.config.example.json clawcc.config.json
+# Edit clawcc.config.json with your settings (change sessionSecret, admin password, dataDir to /data)
+
+# Build and run
 docker compose up -d
+
+# Check health
+curl http://localhost:3400/healthz
 ```
+
+To customize the build, edit `Dockerfile` and `docker-compose.yml` in the project root.
 
 ### Production (Tailscale Mesh)
 
@@ -1239,9 +1221,22 @@ clawcc/
     router/router.test.js     21 tests: routing, params, cookies, query
     zip/zip.test.js           11 tests: ZIP format, CRC-32, validation
     e2e-smoke.js              12 tests: server startup, auth, headers, static files
-  SECURITY_ARCHITECTURE.md    Threat model and security controls
-  COMPLIANCE_PACK.md          SOC 2 / ISO 27001 / NIST CSF mappings
-  PROGRESS.md                 Development progress tracker
+  .github/
+    ISSUE_TEMPLATE/
+      bug_report.md            Bug report template
+      feature_request.md       Feature request template
+    PULL_REQUEST_TEMPLATE.md   PR template
+  Dockerfile                   Container build file
+  docker-compose.yml           Container orchestration
+  .dockerignore                Docker build exclusions
+  LICENSE                      MIT License
+  SECURITY.md                  Vulnerability reporting policy
+  SECURITY_ARCHITECTURE.md     Threat model and security controls
+  COMPLIANCE_PACK.md           SOC 2 / ISO 27001 / NIST CSF mappings
+  CONTRIBUTING.md              Contribution guidelines
+  CODE_OF_CONDUCT.md           Community standards
+  CHANGELOG.md                 Version history
+  PROGRESS.md                  Development progress tracker
 ```
 
 ---
