@@ -87,8 +87,9 @@ function registerAuthRoutes(router, config, modules) {
     if (!authResult.authenticated) return res.error(401, 'Not authenticated');
     let body;
     try { body = await parseBody(req); } catch (err) { return res.error(400, err.message); }
-    const valid = cryptoMod.verifyTOTP(authResult.user.mfaSecret, body.code);
-    if (!valid) return res.error(400, 'Invalid code');
+    const result = auth.verifyMfaLogin(config.dataDir, authResult.user.username, body.code);
+    if (!result.success) return res.error(400, 'Invalid code');
+    audit.log({ actor: authResult.user.username, action: 'auth.mfa.enabled', target: authResult.user.username });
     res.json(200, { success: true });
   });
 
