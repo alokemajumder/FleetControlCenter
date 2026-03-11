@@ -6,7 +6,7 @@
 
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18.0-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen?style=flat-square)](package.json)
-[![Tests](https://img.shields.io/badge/tests-234%20passing-brightgreen?style=flat-square)](test/)
+[![Tests](https://img.shields.io/badge/tests-255%20passing-brightgreen?style=flat-square)](test/)
 [![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)](CONTRIBUTING.md)
 
@@ -29,13 +29,13 @@ AI agents are powerful but opaque. When you run a fleet of them -- across machin
 | "Are my agents drifting from intent?" | Intent contracts with 5-factor drift scoring and enforcement ladders |
 | "How do I stop a rogue agent?" | Emergency kill switch (session/node/global) with step-up MFA |
 | "Can I prove compliance?" | Hash-chained audit trails, Ed25519-signed receipts, ZIP evidence export |
-| "Do I need to install 500 npm packages?" | Zero. Not one. Pure Node.js stdlib. |
+| "Do I need to install 500 npm packages?" | Zero. Not one. Pure Node.js stdlib -- including built-in SQLite for query acceleration. |
 
 ---
 
 ## Key Highlights
 
-**Zero Dependencies** -- No `npm install`. No `node_modules`. No supply-chain risk. The entire project runs on the Node.js standard library (`node:crypto`, `node:fs`, `node:http`).
+**Zero Dependencies** -- No `npm install`. No `node_modules`. No supply-chain risk. The entire project runs on the Node.js standard library (`node:crypto`, `node:fs`, `node:http`, `node:sqlite`).
 
 **Real-Time Observability** -- SSE live feed, activity heatmaps, streak tracking, interactive topology graph, blast-radius analysis, and causality explorer.
 
@@ -70,6 +70,7 @@ Additional agents can be added by configuring `discoveryPaths` (node agent) or `
 
 - **Append-Only JSONL Events** -- Tamper-evident event storage with daily rotation and async serialized writes
 - **Hybrid Index Layer** -- In-memory indexes rebuilt from JSONL on boot; O(1) lookups instead of file scans
+- **SQLite Acceleration (Optional)** -- Compound query acceleration via `node:sqlite` (Node.js 22+); graceful fallback to in-memory indexes on older versions
 - **SSE Real-Time Streaming** -- Server-Sent Events with filters, keepalive, and auto-cleanup
 - **Tailscale Networking** -- Tailnet-first node discovery and peer visibility
 - **Digital Twin Replay** -- Session comparison and step-by-step replay with scrubber
@@ -127,6 +128,7 @@ Additional agents can be added by configuring `discoveryPaths` (node agent) or `
               |  +-- Auth / RBAC    |
               |  +-- Security MW    |
               |  +-- Hybrid Index   |
+              |  +-- SQLite Accel.  |
               |  +-- Events Store   |
               |  +-- Snapshots      |
               |  +-- Policy Engine  |
@@ -151,7 +153,10 @@ Additional agents can be added by configuring `discoveryPaths` (node agent) or `
 
               Data Layer (filesystem)
    +------------------------------------------+
-   | data/events/YYYY-MM-DD.jsonl             |
+   | data/events/YYYY-MM-DD.jsonl  (source    |
+   |   of truth, append-only, tamper-evident) |
+   | data/index.sqlite  (optional accel.      |
+   |   layer, derived, always rebuildable)    |
    | data/snapshots/{sessions,usage,health,   |
    |                 topology}.json           |
    | data/audit/YYYY-MM-DD.jsonl              |
@@ -176,6 +181,7 @@ Additional agents can be added by configuring `discoveryPaths` (node agent) or `
 
 | Tool | Purpose |
 |------|---------|
+| **Node.js >= 22** | Enables SQLite acceleration layer (`node:sqlite`). Not required -- the system falls back to in-memory indexes on older versions. |
 | Tailscale | Secure mesh networking between nodes (recommended for production) |
 | Git | Version tracking on the ops workspace page |
 | systemd / pm2 | Process management for production deployment |
@@ -366,6 +372,13 @@ Copy from `config/clawcc.config.example.json` and customize:
     "tokensPerHour": 100000,          // Alert when hourly tokens exceed 100K
     "errorRateThreshold": 0.10,       // Alert when error rate exceeds 10%
     "enabled": true
+  },
+
+  // --- SQLite Acceleration (Optional, Node.js 22+) ---
+  "sqlite": {
+    "enabled": true,                  // Enable SQLite acceleration (auto-disabled if node:sqlite unavailable)
+    "path": "./data/index.sqlite",    // SQLite database path
+    "walMode": true                   // WAL mode for better concurrent read performance
   }
 }
 ```
@@ -973,7 +986,7 @@ ClawCC is designed to be secure by default. See [SECURITY_ARCHITECTURE.md](SECUR
 | **Network** | Tailscale WireGuard, HMAC request signing, nonce replay prevention, CORS (configurable origins), optional TLS |
 | **Input** | Body size limits (1 MB), event payload limits (64 KB), type validation, ReDoS-safe regex (200-character limit, dangerous pattern detection) |
 | **Output** | Secret redaction, CSP nonces (per-request), security headers (HSTS, X-Frame-Options, X-Content-Type-Options, Permissions-Policy) |
-| **Data** | Append-only JSONL, SHA-256 hash chains, Ed25519 signatures, serialized async write queue with backpressure logging |
+| **Data** | Append-only JSONL (source of truth), optional SQLite acceleration (derived, rebuildable), SHA-256 hash chains, Ed25519 signatures, serialized async write queue with backpressure logging |
 | **Runtime** | Rate limiting (100 req/min general, 10/min auth), request timeouts (30s), graceful shutdown, uncaught exception handlers |
 | **Sandbox** | Command allowlists with argument constraints, path allowlists, symlink resolution, `execFileSync` (no shell), traversal prevention |
 | **Memory** | In-memory event cap (500K), session eviction (50K cap, 30-day expiry), rate-limit map eviction (10K IPs), regex cache cap (1K) |
@@ -1051,7 +1064,13 @@ ClawCC has **zero runtime dependencies**. No npm packages are used. Everything r
 
 | Dependency | Version | Notes |
 |------------|---------|-------|
-| **Node.js** | >= 18.0.0 | Uses `node:crypto`, `node:fs`, `node:http`, `node:os`, `node:path`, `node:url`, `node:child_process`, `node:test`, `node:assert` |
+| **Node.js** | >= 18.0.0 | Uses `node:crypto`, `node:fs`, `node:http`, `node:os`, `node:path`, `node:url`, `node:zlib`, `node:child_process`, `node:test`, `node:assert` |
+
+### Optional (Node.js Built-In)
+
+| Module | Version | Notes |
+|--------|---------|-------|
+| **`node:sqlite`** | Node.js >= 22 | SQLite acceleration layer for faster compound queries and aggregation. When unavailable, the system operates on in-memory indexes with identical functionality. This is a Node.js built-in module (experimental) -- not an npm package. |
 
 ### Optional (Infrastructure)
 
@@ -1082,7 +1101,7 @@ ClawCC does not call any external APIs, cloud services, or SaaS platforms. It is
 Run the full test suite:
 
 ```bash
-# Run all unit tests (10 suites)
+# Run all unit tests (11 suites)
 npm test
 
 # Run E2E smoke tests (starts a real server)
@@ -1092,7 +1111,7 @@ node test/e2e-smoke.js
 node --test test/auth/auth.test.js
 ```
 
-234 tests across 11 suites, all passing:
+255 tests across 12 suites, all passing:
 
 | Suite | Tests | Covers |
 |-------|------:|--------|
@@ -1106,6 +1125,7 @@ node --test test/auth/auth.test.js
 | Middleware | 11 | Session auth, MFA-pending blocking, node signature verification, nonce replay |
 | Router | 21 | Route matching, params, query parsing, cookie parsing, setCookie |
 | ZIP | 11 | ZIP format, CRC-32, file entries, validation |
+| SQLite | 21 | Store creation, event indexing, compound queries, heatmap, rolling usage, audit entries, JSONL catch-up, incremental sync |
 | E2E Smoke | 12 | Server startup, auth flow, security headers, static files, health endpoint, 404 handling |
 
 Tests use `node:test` and `node:assert/strict` -- no external test frameworks.
@@ -1152,6 +1172,7 @@ curl http://CONTROL_PLANE_IP:3400/healthz
 - The in-memory index caps at 500K events (oldest entries are evicted; data persists on disk)
 - Sessions are capped at 50K in memory (ended sessions older than 30 days are evicted)
 - Rate-limit maps evict expired entries above 10K IPs
+- When SQLite is enabled (Node.js 22+), compound queries are offloaded to SQLite, reducing in-memory pressure
 - Restart the server to rebuild indexes from disk
 
 ### Events not appearing in the UI
@@ -1181,12 +1202,13 @@ clawcc/
       audit.js                Append-only audit logging with hash chains
       crypto.js               PBKDF2, TOTP, HMAC, Ed25519, hash chains, recovery codes
       events.js               Event store with async write queue and backpressure logging
-      index.js                Hybrid in-memory index layer (500K event cap)
+      index.js                Hybrid in-memory index layer (500K event cap, SQLite delegation)
       intent.js               Intent contracts and drift scoring (5 factors)
       policy.js               Policy engine with ABAC conditions, ReDoS-safe regex
       receipts.js             Receipt ledger with Ed25519 signing and JSONL persistence
       router.js               HTTP router with :param support, safe URI decoding
       snapshots.js            Session/usage/health/topology snapshots with eviction
+      sqlite-store.js         SQLite acceleration layer (optional, node:sqlite)
       zip.js                  ZIP file builder (deflateRaw + CRC-32)
     middleware/
       auth-middleware.js       Session auth, MFA-pending blocking, step-up, node HMAC verification
@@ -1237,7 +1259,7 @@ clawcc/
   scripts/
     generate-demo-data.js     Demo data generator (30 days, 3 nodes)
   test/
-    run-all.js                Test runner (10 unit suites)
+    run-all.js                Test runner (11 unit suites)
     auth/crypto.test.js       27 tests: PBKDF2, TOTP, HMAC, Ed25519, chains, nonces
     auth/auth.test.js         34 tests: users, sessions, RBAC, MFA, MFA-pending
     sandbox/sandbox.test.js   18 tests: allowlists, traversal, symlinks
@@ -1248,6 +1270,7 @@ clawcc/
     middleware/auth-middleware.test.js  11 tests: auth, MFA-pending, HMAC, nonce replay
     router/router.test.js     21 tests: routing, params, cookies, query
     zip/zip.test.js           11 tests: ZIP format, CRC-32, validation
+    sqlite/sqlite-store.test.js  21 tests: SQLite store, queries, catch-up, sync
     e2e-smoke.js              12 tests: server startup, auth, headers, static files
   .github/
     ISSUE_TEMPLATE/

@@ -5,6 +5,21 @@ All notable changes to ClawCC are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2026-03-11
+
+### Added
+
+- Optional SQLite acceleration layer (`node:sqlite`, Node.js 22+) for faster compound queries, heatmap aggregation, rolling usage, and audit log searches. JSONL remains the tamper-evident source of truth; SQLite is a derived, always-rebuildable acceleration layer.
+- Incremental SQLite catch-up from JSONL on boot (only processes new events since last run).
+- SQLite WAL mode for concurrent read performance.
+- 21 new tests for the SQLite store (255 total tests across 12 suites, all passing).
+
+### Fixed
+
+- Case-sensitive admin role checks across 8 route handlers (fleet-routes, kill-switch, governance-routes) that could allow privilege escalation with mixed-case roles. All now use case-insensitive comparison.
+- Snapshots missing timestamp fallback: `processEvent()` now uses `event.ts || event.timestamp` instead of only `event.ts`, preventing undefined activity timestamps.
+- Receipt bundle verification now checks the first receipt's `prevHash` instead of skipping it, closing a potential chain tampering gap.
+
 ## [0.1.0] - 2026-03-09
 
 ### Added
@@ -67,8 +82,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Zero external dependencies -- Node.js stdlib only.
 - Tailscale mesh VPN integration for node discovery.
-- 234 tests across 11 suites (10 unit + 1 E2E), all passing.
+- 255 tests across 12 suites (11 unit + 1 E2E), all passing.
 - Example configurations for control plane and node agent.
 - Demo data generator (30 days, 3 nodes, 14 providers, ~225 sessions).
 
+[0.1.1]: https://github.com/alokemajumder/clawcc/releases/tag/v0.1.1
 [0.1.0]: https://github.com/alokemajumder/clawcc/releases/tag/v0.1.0

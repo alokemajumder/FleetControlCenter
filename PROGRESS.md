@@ -1,9 +1,9 @@
 # ClawCC Project Progress
 
 > **Last updated:** 2026-03-11
-> **Test results:** 234 tests passing across 11 suites (0 failures)
+> **Test results:** 255 tests passing across 12 suites (0 failures)
 > **External dependencies:** 0 (Node.js standard library only)
-> **Data layer:** Hybrid -- JSONL source of truth with in-memory index for O(1) lookups
+> **Data layer:** Hybrid -- JSONL source of truth + in-memory index + optional SQLite acceleration (node:sqlite)
 
 ---
 
@@ -31,7 +31,7 @@ These constraints are non-negotiable and fully satisfied.
 | #   | Constraint                                         | Status   | Notes                                              |
 | --- | -------------------------------------------------- | -------- | -------------------------------------------------- |
 | 1   | Node.js runtime, no heavy frameworks, static UI   | Complete | All vanilla JS/CSS/HTML, zero npm dependencies     |
-| 2   | No external DB, append-only JSONL with snapshots   | Complete | data/events/*.jsonl, data/snapshots/*.json         |
+| 2   | No external DB, append-only JSONL with snapshots   | Complete | data/events/*.jsonl, data/snapshots/*.json, optional SQLite acceleration |
 | 3   | SSE for real-time communication                    | Complete | GET /api/events/stream with filters and keepalive  |
 | 4   | Tailnet-first networking (Tailscale)               | Complete | Discovery, status JSON, peers visibility           |
 | 5   | Security hardened by default (ClawCC Shield)        | Complete | See the Shield section below                       |
@@ -43,7 +43,7 @@ These constraints are non-negotiable and fully satisfied.
 
 | Package        | Files | Status   | Notes                                                           |
 | -------------- | ----- | -------- | --------------------------------------------------------------- |
-| /control-plane | 20    | Complete | Server, router, 2 middleware, 6 route groups, 11 library modules |
+| /control-plane | 21    | Complete | Server, router, 2 middleware, 6 route groups, 12 library modules |
 | /node-agent    | 5     | Complete | Daemon, discovery, telemetry, sandbox, spool                    |
 | /ui            | 6     | Complete | Static SPA with glassmorphic dark theme, 7 pages                |
 | /cli           | 1     | Complete | 18 commands with ANSI colors and table formatting               |
@@ -55,7 +55,7 @@ These constraints are non-negotiable and fully satisfied.
 | /tripwires     | 1     | Complete | Honeytoken definitions                                          |
 | /skills        | 1     | Complete | Registry JSON with canary configuration                         |
 | /scripts       | 1     | Complete | Demo data generator (30 days, 3 nodes, 14 providers, ~225 sessions) |
-| /test          | 13    | Complete | 11 suites plus runner, 234 tests, all passing                   |
+| /test          | 15    | Complete | 12 suites plus runner, 255 tests, all passing                   |
 
 ---
 
@@ -73,8 +73,9 @@ These constraints are non-negotiable and fully satisfied.
 | Middleware   | 11    | Pass   | test/middleware/auth-middleware.test.js   |
 | Router      | 21    | Pass   | test/router/router.test.js               |
 | ZIP         | 11    | Pass   | test/zip/zip.test.js                     |
+| SQLite      | 21    | Pass   | test/sqlite/sqlite-store.test.js         |
 | E2E Smoke   | 12    | Pass   | test/e2e-smoke.js                        |
-| **Total**   | **234** | **All pass** |                                   |
+| **Total**   | **255** | **All pass** |                                   |
 
 ### Test Coverage Details
 
@@ -90,6 +91,7 @@ These constraints are non-negotiable and fully satisfied.
 | Middleware | Session authentication, MFA-pending blocking, node HMAC signature verification, nonce replay detection, default-secret rejection                                                           |
 | Router     | Route matching with :params, query string parsing, cookie parsing (safe URI decode), setCookie with options, 404 handling                                                                  |
 | ZIP        | ZIP file format correctness, CRC-32 computation, multi-file entries, input validation                                                                                                      |
+| SQLite     | Store creation and graceful fallback, event indexing and dedup, compound query filters, date range queries, limit/offset, heatmap aggregation, rolling usage aggregation, audit entry indexing, JSONL catch-up (full and incremental), event count, close |
 | E2E Smoke  | Full server start and stop, login flow, /api/auth/me, security headers (CSP, X-Frame-Options), static file serving, /healthz, 404 JSON responses                                          |
 
 ---
