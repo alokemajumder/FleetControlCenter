@@ -1,9 +1,55 @@
 # Changelog
 
-All notable changes to ClawCC are documented in this file.
+All notable changes to Fleet Control Center are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.2.0] - 2026-03-12
+
+### Added
+
+#### Fleet Operations
+- Doctor diagnostics engine with 12 system health checks and 4 auto-fixable issues.
+- Backup and restore manager with timestamped directories and JSON manifests.
+- Gateway federation mode for multi-fleet proxy and fan-out aggregation with health checks.
+- Agent tracker supporting 7 agent types with heartbeat, stale detection, and fleet summary.
+- Agent SOUL files (personality/behavior markdown) with disk sync and per-agent CRUD.
+- Channels subsystem (broadcast/direct/group) with JSONL persistence and SSE notifications.
+- 7-step onboarding wizard with per-step validation and security scan integration.
+- Knowledge graph with force-directed layout, BFS traversal, and connected components.
+- Multi-tenant isolation with slug-based routing, quotas, and scoped data directories.
+
+#### Platform Features
+- Webhooks with HMAC-SHA256 signing, exponential backoff retry, and circuit breaker pattern.
+- Kanban task board with 6 columns, enforced status transitions, and comments.
+- Local tool integration for session/project/memory discovery with path traversal prevention.
+- Skills hub with 5-point security scanning, install/uninstall, and quarantine support.
+- Agent evaluation framework with 4-layer scoring, quality gates, baselines, and fleet scorecards.
+- Update checker with GitHub release polling, semver comparison, and self-update readiness.
+- Natural language scheduler parsing 20+ patterns to cron expressions with job management.
+- User management with API key authentication (SHA-256 hashed), role assignment, and activity tracking.
+- Project management with agent assignment, session linking, and search.
+- Config export/import with automatic secret redaction, validation, and diff.
+- Security profiles (minimal/standard/strict) with custom profile CRUD and event evaluation.
+- Secret scanner with 14+ regex patterns (AWS, GitHub, Stripe, JWT, PEM, etc.) and severity levels.
+
+#### UI
+- Expanded from 7 to 21 pages: added Doctor, Gateway, Agents, Channels, Tasks, Knowledge Graph, Tenants, Skills Hub, Evaluations, Scheduler, Projects, Users, Config, Security.
+- Kanban board with drag-and-drop-style status transitions.
+- Force-directed knowledge graph visualization (vanilla SVG).
+- Chat UI for agent channels with SSE streaming.
+- Security posture dashboard with profile selector and secret scanner.
+
+#### Testing
+- 578 new tests across 19 new suites (833 total tests, 31 suites, all passing).
+
+### Changed
+- Rebranded user-facing strings from "ClawCC" to "Fleet Control Center" / "FCC".
+- Updated all GitHub URLs to `github.com/alokemajumder/FleetControlCenter`.
+- Webhook headers renamed from `X-ClawCC-*` to `X-FCC-*`.
+- Auth middleware now supports API key authentication via `Authorization: Bearer` and `X-API-Key` headers.
+- Server.js expanded to initialize 31 modules with 24 route files and full graceful shutdown.
 
 ## [0.1.1] - 2026-03-11
 
@@ -86,5 +132,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Example configurations for control plane and node agent.
 - Demo data generator (30 days, 3 nodes, 14 providers, ~225 sessions).
 
-[0.1.1]: https://github.com/alokemajumder/clawcc/releases/tag/v0.1.1
-[0.1.0]: https://github.com/alokemajumder/clawcc/releases/tag/v0.1.0
+[0.2.0]: https://github.com/alokemajumder/FleetControlCenter/releases/tag/v0.2.0
+[0.1.1]: https://github.com/alokemajumder/FleetControlCenter/releases/tag/v0.1.1
+[0.1.0]: https://github.com/alokemajumder/FleetControlCenter/releases/tag/v0.1.0

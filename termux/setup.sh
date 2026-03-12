@@ -1,11 +1,11 @@
 #!/data/data/com.termux/files/usr/bin/bash
-# ClawCC Termux Setup Script
-# Installs and configures ClawCC node-agent or CLI client on Android via Termux
+# Fleet Control Center Termux Setup Script
+# Installs and configures FCC node-agent or CLI client on Android via Termux
 
 set -e
 
 echo "========================================="
-echo "  ClawCC Termux Setup"
+echo "  Fleet Control Center Termux Setup"
 echo "========================================="
 echo ""
 
@@ -31,13 +31,13 @@ else
   echo "[2/4] Git already installed"
 fi
 
-# Clone or update ClawCC
+# Clone or update FCC
 CLAWCC_DIR="$HOME/clawcc"
 if [ -d "$CLAWCC_DIR" ]; then
-  echo "[3/4] Updating ClawCC..."
+  echo "[3/4] Updating Fleet Control Center..."
   cd "$CLAWCC_DIR" && git pull
 else
-  echo "[3/4] Please clone ClawCC to $CLAWCC_DIR manually"
+  echo "[3/4] Please clone Fleet Control Center to $CLAWCC_DIR manually"
   echo "       git clone <your-repo-url> $CLAWCC_DIR"
 fi
 

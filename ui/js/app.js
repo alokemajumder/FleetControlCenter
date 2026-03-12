@@ -1,7 +1,7 @@
 'use strict';
 
 /* ===================================================================
-   ClawCC - Main Application Controller
+   FCC - Main Application Controller
    =================================================================== */
 
 const App = {
@@ -17,6 +17,20 @@ const App = {
     memory:     { label: 'Memory & Files', shortcut: '5', render: renderMemoryPage },
     ops:        { label: 'Ops',            shortcut: '6', render: renderOpsPage },
     governance: { label: 'Governance',     shortcut: '7', render: renderGovernancePage },
+    agents:     { label: 'Agents',        shortcut: '8', render: renderAgentsPage },
+    channels:   { label: 'Channels',      shortcut: '9', render: renderChannelsPage },
+    knowledge:  { label: 'Knowledge',     shortcut: '0', render: renderKnowledgePage },
+    doctor:     { label: 'Doctor',        shortcut: null, render: renderDoctorPage },
+    gateway:    { label: 'Gateway',       shortcut: null, render: renderGatewayPage },
+    tasks:      { label: 'Tasks',        shortcut: null, render: renderTasksPage },
+    webhooks:   { label: 'Webhooks',     shortcut: null, render: renderWebhooksPage },
+    claude:     { label: 'Claude Code',  shortcut: null, render: renderClaudePage },
+    skills:     { label: 'Skills Hub',   shortcut: null, render: renderSkillsPage },
+    evaluations:{ label: 'Evaluations',  shortcut: null, render: renderEvaluationsPage },
+    scheduler:  { label: 'Scheduler',    shortcut: null, render: renderSchedulerPage },
+    security:   { label: 'Security',     shortcut: null, render: renderSecurityPage },
+    users:      { label: 'Users',        shortcut: null, render: renderUsersPage },
+    projects:   { label: 'Projects',     shortcut: null, render: renderProjectsPage },
   },
 
   /* ── Init ─────────────────────────────────────────── */
@@ -44,7 +58,7 @@ const App = {
     el.innerHTML = `
       <div class="login-screen">
         <div class="login-card glass-card">
-          <div class="login-logo">ClawCC</div>
+          <div class="login-logo">FCC</div>
           <div class="login-subtitle">Fleet Control Center</div>
           <div class="login-error" id="login-error"></div>
           <form id="login-form">
@@ -128,9 +142,12 @@ const App = {
   navigateTo(page) {
     if (!this.pages[page]) return;
 
-    // Disconnect SSE when leaving live feed
+    // Disconnect SSE when leaving live feed or channels
     if (this.currentPage === 'livefeed' && page !== 'livefeed') {
       SSE.disconnect('livefeed');
+    }
+    if (this.currentPage === 'channels' && page !== 'channels') {
+      SSE.disconnect('channel');
     }
 
     this.currentPage = page;
@@ -167,6 +184,9 @@ const App = {
         case '5': this.navigateTo('memory'); break;
         case '6': this.navigateTo('ops'); break;
         case '7': this.navigateTo('governance'); break;
+        case '8': this.navigateTo('agents'); break;
+        case '9': this.navigateTo('channels'); break;
+        case '0': this.navigateTo('knowledge'); break;
         case '/':
           e.preventDefault();
           document.getElementById('search-input')?.focus();

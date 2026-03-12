@@ -31,11 +31,11 @@ self.addEventListener('fetch', (event) => {
 });
 
 self.addEventListener('push', (event) => {
-  const data = event.data ? event.data.json() : { title: 'ClawCC Alert', body: 'New notification' };
+  const data = event.data ? event.data.json() : { title: 'FCC Alert', body: 'New notification' };
   event.waitUntil(
-    self.registration.showNotification(data.title || 'ClawCC Alert', {
+    self.registration.showNotification(data.title || 'FCC Alert', {
       body: data.body || '',
-      tag: data.tag || 'clawcc-alert',
+      tag: data.tag || 'fcc-alert',
       data: data.url || '/pocket/'
     })
   );

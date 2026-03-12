@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Report a bug to help improve ClawCC
+about: Report a bug to help improve Fleet Control Center
 title: "[Bug] "
 labels: bug
 assignees: ''
@@ -29,7 +29,7 @@ What actually happened. Include error messages, log output, or screenshots if ap
 
 - **Node.js version**: (output of `node --version`)
 - **Operating system**: (e.g., Ubuntu 22.04, macOS 14, Windows 11)
-- **ClawCC version**: (output of `git log --oneline -1` or version from package.json)
+- **FCC version**: (output of `git log --oneline -1` or version from package.json)
 - **Browser** (if UI-related): (e.g., Chrome 120, Firefox 121)
 
 ## Configuration

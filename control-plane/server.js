@@ -49,7 +49,7 @@ if (config.httpsEnabled) {
 }
 
 // Create data directories
-const dataDirs = ['events', 'snapshots', 'audit', 'receipts', 'receipts/roots', 'fleet', 'intents', 'users'];
+const dataDirs = ['events', 'snapshots', 'audit', 'receipts', 'receipts/roots', 'fleet', 'intents', 'users', 'agents', 'agents/souls', 'channels', 'onboarding', 'knowledge', 'tenants', 'tasks', 'webhooks', 'skills-hub', 'evaluations', 'scheduler', 'projects', 'security'];
 for (const d of dataDirs) {
   fs.mkdirSync(path.join(config.dataDir, d), { recursive: true });
 }
@@ -66,6 +66,25 @@ const intentMod = require('./lib/intent');
 const { createRouter } = require('./lib/router');
 const { createIndex } = require('./lib/index');
 const { createSqliteStore } = require('./lib/sqlite-store');
+const { createDoctor } = require('./lib/doctor');
+const { createBackupManager } = require('./lib/backup');
+const { createGateway } = require('./lib/gateway');
+const { createAgentTracker } = require('./lib/agents');
+const { createChannelManager } = require('./lib/channels');
+const { createOnboarding } = require('./lib/onboarding');
+const { createKnowledgeGraph } = require('./lib/knowledge-graph');
+const { createTenantManager } = require('./lib/tenants');
+const { createTaskManager } = require('./lib/tasks');
+const { createWebhookManager } = require('./lib/webhooks');
+const { createClaudeIntegration } = require('./lib/claude-integration');
+const { createSkillsHub } = require('./lib/skills-hub');
+const { createEvaluationEngine } = require('./lib/evaluations');
+const { createUpdater } = require('./lib/updater');
+const { createScheduler } = require('./lib/scheduler');
+const { createProjectManager } = require('./lib/projects');
+const { createConfigManager } = require('./lib/config-manager');
+const { createSecurityProfileManager } = require('./lib/security-profiles');
+const { createSecretScanner } = require('./lib/secret-scanner');
 const { securityHeaders, rateLimiter } = require('./middleware/security');
 
 // Initialize modules
@@ -130,7 +149,7 @@ const auth = {
   },
   enableMfa(dataDir, username) {
     const result = authManager.setupMFA(username);
-    return { secret: result.secret, qrUri: 'otpauth://totp/ClawCC:' + username + '?secret=' + result.secret + '&issuer=ClawCC', recoveryCodes: result.recoveryCodes };
+    return { secret: result.secret, qrUri: 'otpauth://totp/FCC:' + username + '?secret=' + result.secret + '&issuer=FCC', recoveryCodes: result.recoveryCodes };
   },
   verifyMfaLogin(dataDir, username, code) {
     try {
@@ -153,6 +172,39 @@ const auth = {
   },
   loadUsers(dataDir) {
     return authManager.listUsers();
+  },
+  deleteUser(username) {
+    return authManager.deleteUser(username);
+  },
+  createApiKey(username) {
+    return authManager.createApiKey(username);
+  },
+  revokeApiKey(username, keyPrefix) {
+    return authManager.revokeApiKey(username, keyPrefix);
+  },
+  listApiKeys(username) {
+    return authManager.listApiKeys(username);
+  },
+  authenticateByApiKey(key) {
+    return authManager.authenticateByApiKey(key);
+  },
+  listAllUsers() {
+    return authManager.listAllUsers();
+  },
+  setUserRole(username, role) {
+    return authManager.setUserRole(username, role);
+  },
+  disableUser(username) {
+    return authManager.disableUser(username);
+  },
+  enableUser(username) {
+    return authManager.enableUser(username);
+  },
+  getUserActivity(username) {
+    return authManager.getUserActivity(username);
+  },
+  createUser(username, password, role) {
+    return authManager.createUser(username, password, role);
   },
   init() { /* already initialized */ }
 };
@@ -333,6 +385,87 @@ events.subscribe({}, (event) => {
   }
 });
 
+// Doctor (diagnostic/health-check system)
+const doctor = createDoctor({
+  config,
+  dataDir: config.dataDir,
+  authManager,
+  receiptStore,
+  eventStore: eventStoreInstance,
+  snapshots: snapshotsMod
+});
+
+// Backup manager
+const backupManager = createBackupManager({ dataDir: config.dataDir });
+
+// Gateway (multi-fleet federation) — opt-in via config.gateway.enabled
+let gatewayInstance = null;
+if (config.gateway && config.gateway.enabled) {
+  gatewayInstance = createGateway({
+    dataDir: config.dataDir,
+    upstreams: config.gateway.upstreams || [],
+    timeoutMs: config.gateway.timeoutMs || 10000
+  });
+  console.log('Gateway mode: enabled');
+}
+
+// Agent tracker
+const agentTracker = createAgentTracker({ dataDir: config.dataDir });
+
+// Channel manager (agent communications)
+const channelManager = createChannelManager({ dataDir: config.dataDir });
+
+// Onboarding wizard
+const onboarding = createOnboarding({ dataDir: config.dataDir });
+
+// Knowledge Graph (enabled by default, opt-out via config.knowledgeGraph.enabled = false)
+let knowledgeGraph = null;
+if (config.knowledgeGraph?.enabled !== false) {
+  knowledgeGraph = createKnowledgeGraph({ dataDir: config.dataDir });
+  console.log('Knowledge Graph: enabled');
+}
+
+// Multi-Tenant (disabled by default, opt-in via config.multiTenant.enabled = true)
+let tenantManager = null;
+if (config.multiTenant && config.multiTenant.enabled) {
+  tenantManager = createTenantManager({ dataDir: config.dataDir });
+  console.log('Multi-Tenant: enabled');
+}
+
+// Task manager
+const taskManager = createTaskManager({ dataDir: config.dataDir });
+
+// Webhook manager (outbound webhook delivery system)
+const webhookManager = createWebhookManager({ dataDir: config.dataDir });
+
+// Claude Code local integration (read-only discovery of ~/.claude data)
+const os = require('os');
+const claudeIntegration = createClaudeIntegration({ claudeDir: config.claudeDir || path.join(os.homedir(), '.claude') });
+
+// Skills Hub (browse, install, manage agent skills with security scanning)
+const skillsHub = createSkillsHub({ dataDir: config.dataDir });
+
+// Evaluation engine (agent quality assessment and quality gates)
+const evaluationEngine = createEvaluationEngine({ dataDir: config.dataDir });
+
+// Updater (version check + self-update)
+const updater = createUpdater({ projectRoot: path.resolve(__dirname, '..'), apiUrl: config.updater && config.updater.apiUrl });
+
+// Natural Language Scheduler (recurring jobs with NL expressions)
+const scheduler = createScheduler({ dataDir: config.dataDir, taskManager, webhookManager });
+
+// Project manager
+const projectManager = createProjectManager({ dataDir: config.dataDir });
+
+// Config manager (wraps running config for export/import/validation)
+const configManager = createConfigManager({ config });
+
+// Security profile manager (tunable strictness levels for security responses)
+const securityProfiles = createSecurityProfileManager({ dataDir: config.dataDir });
+
+// Secret scanner (pattern-based secret detection in text content)
+const secretScanner = createSecretScanner();
+
 // Module bag for routes
 const modules = {
   crypto: cryptoMod,
@@ -343,7 +476,26 @@ const modules = {
   snapshots: snapshotsMod,
   receipts,
   policy,
-  intent: intentMod
+  intent: intentMod,
+  doctor,
+  backupManager,
+  gateway: gatewayInstance,
+  agentTracker,
+  channelManager,
+  onboarding,
+  knowledgeGraph,
+  tenantManager,
+  taskManager,
+  webhookManager,
+  claudeIntegration,
+  skillsHub,
+  evaluationEngine,
+  updater,
+  scheduler,
+  projectManager,
+  configManager,
+  securityProfiles,
+  secretScanner
 };
 
 // Create router and register routes
@@ -355,6 +507,24 @@ const { registerEventRoutes } = require('./routes/event-routes');
 const { registerOpsRoutes } = require('./routes/ops-routes');
 const { registerGovernanceRoutes } = require('./routes/governance-routes');
 const { registerKillSwitchRoutes } = require('./routes/kill-switch');
+const { registerDoctorRoutes } = require('./routes/doctor-routes');
+const { registerGatewayRoutes } = require('./routes/gateway-routes');
+const { registerAgentRoutes } = require('./routes/agent-routes');
+const { registerChannelRoutes } = require('./routes/channel-routes');
+const { registerOnboardingRoutes } = require('./routes/onboarding-routes');
+const { registerKnowledgeRoutes } = require('./routes/knowledge-routes');
+const { registerTenantRoutes } = require('./routes/tenant-routes');
+const { registerTaskRoutes } = require('./routes/task-routes');
+const { registerWebhookRoutes } = require('./routes/webhook-routes');
+const { registerClaudeRoutes } = require('./routes/claude-routes');
+const { registerSkillsHubRoutes } = require('./routes/skills-hub-routes');
+const { registerEvaluationRoutes } = require('./routes/evaluation-routes');
+const { registerUpdaterRoutes } = require('./routes/updater-routes');
+const { registerSchedulerRoutes } = require('./routes/scheduler-routes');
+const { registerUserRoutes } = require('./routes/user-routes');
+const { registerProjectRoutes } = require('./routes/project-routes');
+const { registerConfigRoutes } = require('./routes/config-routes');
+const { registerSecurityRoutes } = require('./routes/security-routes');
 
 registerAuthRoutes(router, config, modules);
 registerFleetRoutes(router, config, modules);
@@ -362,6 +532,38 @@ registerEventRoutes(router, config, modules);
 registerOpsRoutes(router, config, modules);
 registerGovernanceRoutes(router, config, modules);
 registerKillSwitchRoutes(router, config, modules);
+registerDoctorRoutes(router, config, modules);
+registerAgentRoutes(router, config, modules);
+registerChannelRoutes(router, config, modules);
+registerOnboardingRoutes(router, config, modules);
+if (gatewayInstance) {
+  registerGatewayRoutes(router, config, modules);
+}
+if (knowledgeGraph) {
+  registerKnowledgeRoutes(router, config, modules);
+}
+if (tenantManager) {
+  registerTenantRoutes(router, config, modules);
+}
+registerTaskRoutes(router, config, modules);
+registerWebhookRoutes(router, config, modules);
+registerClaudeRoutes(router, config, modules);
+registerSkillsHubRoutes(router, config, modules);
+registerEvaluationRoutes(router, config, modules);
+registerUpdaterRoutes(router, config, modules);
+registerSchedulerRoutes(router, config, modules);
+registerUserRoutes(router, config, modules);
+registerProjectRoutes(router, config, modules);
+registerConfigRoutes(router, config, modules);
+registerSecurityRoutes(router, config, modules);
+
+// Start scheduler tick loop
+scheduler.start();
+
+// Webhook dispatch: auto-dispatch events to registered webhooks
+events.subscribe({}, (event) => {
+  try { webhookManager.dispatch(event.type, event); } catch { /* ignore dispatch errors */ }
+});
 
 // MIME types for static files
 const mimeTypes = {
@@ -468,7 +670,7 @@ async function handleRequest(req, res) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,X-ClawCC-NodeId,X-ClawCC-Timestamp,X-ClawCC-Nonce,X-ClawCC-Signature');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,X-ClawCC-NodeId,X-ClawCC-Timestamp,X-ClawCC-Nonce,X-ClawCC-Signature,X-API-Key,Authorization');
   }
   if (req.method === 'OPTIONS') {
     res.writeHead(204);
@@ -555,13 +757,21 @@ server.headersTimeout = 66000;
 server.listen(config.port, config.host, () => {
   const proto = config.httpsEnabled ? 'https' : 'http';
   console.log('');
-  console.log('  ClawCC Fleet Control Center');
+  console.log('  Fleet Control Center');
   console.log('  Mode: ' + (config.mode || 'local'));
   console.log('  Listening: ' + config.host + ':' + config.port);
   console.log('  UI: ' + proto + '://localhost:' + config.port);
   console.log('  Pocket: ' + proto + '://localhost:' + config.port + '/pocket/');
   console.log('  Data: ' + config.dataDir);
+  if (gatewayInstance) console.log('  Gateway: enabled (' + gatewayInstance.listUpstreams().length + ' upstreams)');
   console.log('');
+  // Start periodic update checks
+  updater.startPeriodicCheck((config.updater && config.updater.checkIntervalMs) || 21600000);
+  // Start gateway health checks after server is listening
+  if (gatewayInstance) {
+    const gwInterval = (config.gateway && config.gateway.healthCheckIntervalMs) || 30000;
+    gatewayInstance.startHealthChecks(gwInterval);
+  }
 });
 
 // Periodic snapshot rebuild
@@ -569,6 +779,11 @@ const snapshotIntervalMs = (config.events && config.events.snapshotIntervalMs) |
 const snapshotRebuildInterval = setInterval(() => {
   try { snapshotsMod.rebuild(config.dataDir); } catch { /* ignore */ }
 }, snapshotIntervalMs);
+
+// Periodic agent stale check (every 60s)
+const agentStaleInterval = setInterval(() => {
+  try { agentTracker.markStale(); } catch { /* ignore */ }
+}, 60000);
 
 // Graceful shutdown
 let shuttingDown = false;
@@ -588,8 +803,21 @@ function shutdown(signal) {
   if (sqliteStore) {
     try { sqliteStore.close(); console.log('SQLite closed.'); } catch { /* ignore */ }
   }
+  // Stop gateway health checks
+  if (gatewayInstance) {
+    try { gatewayInstance.stopHealthChecks(); } catch { /* ignore */ }
+  }
   // Clear snapshot rebuild interval
   clearInterval(snapshotRebuildInterval);
+  // Clear agent stale check interval and persist
+  clearInterval(agentStaleInterval);
+  try { agentTracker.destroy(); } catch { /* ignore */ }
+  // Stop update checker
+  try { updater.stopPeriodicCheck(); } catch { /* ignore */ }
+  // Stop scheduler tick loop
+  try { scheduler.stop(); } catch { /* ignore */ }
+  // Stop Claude Code file watcher
+  try { claudeIntegration.stopWatching(); } catch { /* ignore */ }
   // Stop accepting new connections
   server.close(() => {
     console.log('Server closed.');

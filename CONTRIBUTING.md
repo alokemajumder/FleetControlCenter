@@ -1,18 +1,18 @@
-# Contributing to ClawCC
+# Contributing to Fleet Control Center
 
-Thank you for your interest in contributing to ClawCC. This document outlines the guidelines and procedures for contributing to the project.
+Thank you for your interest in contributing to Fleet Control Center. This document outlines the guidelines and procedures for contributing to the project.
 
 ## Ground Rules
 
 1. **Zero external dependencies.** All code must use the Node.js standard library only. No npm packages. This requirement is non-negotiable.
 2. **All new features require tests.** Use `node:test` and `node:assert/strict`.
-3. **Security first.** Do not introduce vulnerabilities such as injection, XSS, or path traversal. If you discover a vulnerability, report it privately via [Security Advisories](https://github.com/alokemajumder/clawcc/security/advisories).
+3. **Security first.** Do not introduce vulnerabilities such as injection, XSS, or path traversal. If you discover a vulnerability, report it privately via [Security Advisories](https://github.com/alokemajumder/FleetControlCenter/security/advisories).
 
 ## Getting Started
 
 ```bash
 # Clone and verify
-git clone https://github.com/alokemajumder/clawcc.git
+git clone https://github.com/alokemajumder/FleetControlCenter.git
 cd clawcc
 node --version  # Must be >= 18.0.0
 
@@ -100,8 +100,8 @@ Open an issue on GitHub with the following information:
 
 ## Reporting Security Vulnerabilities
 
-**Do not** open a public issue for security vulnerabilities. Instead, use [GitHub Security Advisories](https://github.com/alokemajumder/clawcc/security/advisories) to report them privately. See [SECURITY.md](SECURITY.md) for the full policy.
+**Do not** open a public issue for security vulnerabilities. Instead, use [GitHub Security Advisories](https://github.com/alokemajumder/FleetControlCenter/security/advisories) to report them privately. See [SECURITY.md](SECURITY.md) for the full policy.
 
 ## License
 
-By contributing to ClawCC, you agree that your contributions will be licensed under the MIT License.
+By contributing to Fleet Control Center, you agree that your contributions will be licensed under the MIT License.

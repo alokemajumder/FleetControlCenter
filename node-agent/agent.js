@@ -226,7 +226,7 @@ async function drainSpool() {
 // Main loop
 async function main() {
   console.log('');
-  console.log('ClawCC Node Agent');
+  console.log('Fleet Control Center Node Agent');
   console.log('NodeId:', config.nodeId);
   console.log('Control Plane:', controlPlaneUrl);
   console.log('Tags:', (config.tags || []).join(', ') || 'none');

@@ -1,16 +1,16 @@
 <div align="center">
 
-# ClawCC
+# Fleet Control Center
 
 ### Fleet Control Center for AI Agents
 
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18.0-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen?style=flat-square)](package.json)
-[![Tests](https://img.shields.io/badge/tests-255%20passing-brightgreen?style=flat-square)](test/)
+[![Tests](https://img.shields.io/badge/tests-833%20passing-brightgreen?style=flat-square)](test/)
 [![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)](CONTRIBUTING.md)
 
-**Self-hosted mission control for managing, monitoring, governing, and replaying AI agent fleets.**
+**Self-hosted fleet control center for managing, monitoring, governing, and replaying AI agent fleets.**
 **Zero external dependencies. Pure Node.js. Air-gappable.**
 
 [Quick Start](#quick-start) | [Documentation](#api-reference) | [Security](#security) | [Contributing](#contributing)
@@ -19,11 +19,11 @@
 
 ---
 
-## Why ClawCC?
+## Why Fleet Control Center?
 
-AI agents are powerful but opaque. When you run a fleet of them -- across machines, teams, or environments -- you need visibility, control, and accountability. ClawCC delivers all three without vendor lock-in or dependency bloat.
+AI agents are powerful but opaque. When you run a fleet of them -- across machines, teams, or environments -- you need visibility, control, and accountability. Fleet Control Center delivers all three without vendor lock-in or dependency bloat.
 
-| Problem | ClawCC Solution |
+| Problem | FCC Solution |
 |---------|-----------------|
 | "What did my agents do?" | Append-only event ledger with session replay, timeline, and causality tracing |
 | "Are my agents drifting from intent?" | Intent contracts with 5-factor drift scoring and enforcement ladders |
@@ -51,7 +51,7 @@ AI agents are powerful but opaque. When you run a fleet of them -- across machin
 
 ## Supported Agents
 
-ClawCC discovers and monitors sessions from any AI agent. The following are auto-discovered out of the box:
+Fleet Control Center discovers and monitors sessions from any AI agent. The following are auto-discovered out of the box:
 
 | Category | Agents |
 |----------|--------|
@@ -79,6 +79,9 @@ Additional agents can be added by configuring `discoveryPaths` (node agent) or `
 - **Blast-Radius Analysis** -- Per-session and per-node impact assessment
 - **Causality Explorer** -- Trace file and tool references across sessions
 - **Usage Alerts** -- Configurable cost, token, and error-rate thresholds with rolling windows
+- **Knowledge Graph** -- Force-directed visualization of agents, tools, files, and services with BFS traversal
+- **Gateway Federation** -- Multi-fleet proxy and fan-out aggregation with upstream health checks
+- **Agent SOUL Files** -- Markdown personality/behavior definitions per agent with disk sync
 </details>
 
 <details>
@@ -93,11 +96,24 @@ Additional agents can be added by configuring `discoveryPaths` (node agent) or `
 - **Tamper-Evident Receipt Ledger** -- SHA-256 hash chains with daily Ed25519 root signing
 - **4-Eyes Approval Workflow** -- Dual-approver mechanism for high-risk actions with self-approve prevention
 - **Evidence Export** -- ZIP bundles containing events, audit logs, receipts, and integrity hashes
+- **Security Profiles** -- Minimal/standard/strict enforcement profiles with custom profile support
+- **Secret Scanner** -- 14+ regex patterns (AWS, GitHub, Stripe, JWT, PEM, etc.) with severity levels
 </details>
 
 <details>
 <summary><strong>Operations</strong></summary>
 
+- **Doctor Diagnostics** -- 12 system health checks with 4 auto-fixable issues
+- **Backup and Restore** -- Timestamped backups with JSON manifests
+- **Webhooks** -- HMAC-SHA256 signed delivery with exponential backoff retry and circuit breaker
+- **Kanban Task Board** -- 6 columns with enforced status transitions and comments
+- **Agent Evaluation Framework** -- 4-layer scoring with quality gates, baselines, and fleet scorecards
+- **Natural Language Scheduler** -- Parse "every monday at 3pm" to cron with job management
+- **Onboarding Wizard** -- 7-step guided setup with security scan integration
+- **User Management** -- API key authentication (SHA-256 hashed), role assignment, activity tracking
+- **Project Management** -- Agent/session assignment, search, archive/activate
+- **Config Management** -- Export/import with automatic secret redaction, validation, diff
+- **Multi-Tenant Isolation** -- Slug-based routing with quotas and scoped data directories
 - **Mobile Ops (Pocket PWA)** -- Live feed, alerts, push notifications, and emergency kill with step-up auth
 - **CLI Tool** -- 18 commands for fleet management, policy simulation, and evidence export
 - **Graceful Shutdown** -- Connection draining, snapshot flushing, write-queue completion, and signal handling
@@ -194,7 +210,7 @@ Additional agents can be added by configuring `discoveryPaths` (node agent) or `
 ### 1. Clone
 
 ```bash
-git clone https://github.com/alokemajumder/clawcc.git
+git clone https://github.com/alokemajumder/FleetControlCenter.git
 cd clawcc
 ```
 
@@ -497,7 +513,7 @@ When triggered, the system automatically quarantines the session and node, creat
 ### Development (Local)
 
 ```bash
-git clone https://github.com/alokemajumder/clawcc.git
+git clone https://github.com/alokemajumder/FleetControlCenter.git
 cd clawcc
 cp config/clawcc.config.example.json clawcc.config.json
 node control-plane/server.js
@@ -513,7 +529,7 @@ sudo useradd -m -s /bin/bash clawcc
 sudo su - clawcc
 
 # Clone the repository
-git clone https://github.com/alokemajumder/clawcc.git
+git clone https://github.com/alokemajumder/FleetControlCenter.git
 cd clawcc
 
 # Create and edit config
@@ -565,7 +581,7 @@ Edit `clawcc.config.json`:
 ```ini
 # /etc/systemd/system/clawcc.service
 [Unit]
-Description=ClawCC Fleet Control Center
+Description=Fleet Control Center
 After=network.target
 
 [Service]
@@ -939,12 +955,12 @@ The Pocket PWA is a mobile-optimized interface served at `/pocket/`:
 
 ### Android (Termux) Deployment
 
-To run ClawCC directly on an Android device:
+To run Fleet Control Center directly on an Android device:
 
 ```bash
 # In Termux
 pkg install nodejs git
-git clone https://github.com/alokemajumder/clawcc.git
+git clone https://github.com/alokemajumder/FleetControlCenter.git
 cd clawcc/termux
 bash setup.sh
 ```
@@ -975,7 +991,7 @@ The node agent runs on each machine you want to monitor and handles the followin
 
 ## Security
 
-ClawCC is designed to be secure by default. See [SECURITY_ARCHITECTURE.md](SECURITY_ARCHITECTURE.md) for the full threat model and control details.
+Fleet Control Center is designed to be secure by default. See [SECURITY_ARCHITECTURE.md](SECURITY_ARCHITECTURE.md) for the full threat model and control details.
 
 ### Security Summary
 
@@ -1025,7 +1041,7 @@ curl -b cookies.txt -X POST http://localhost:3400/api/auth/mfa/enable \
 
 ## Governance and Compliance
 
-ClawCC provides built-in compliance controls mapped to SOC 2, ISO 27001, and NIST CSF. See [COMPLIANCE_PACK.md](COMPLIANCE_PACK.md) for detailed control mappings.
+Fleet Control Center provides built-in compliance controls mapped to SOC 2, ISO 27001, and NIST CSF. See [COMPLIANCE_PACK.md](COMPLIANCE_PACK.md) for detailed control mappings.
 
 ### Evidence Export
 
@@ -1058,7 +1074,7 @@ node cli/clawcc.js verify evidence-bundle.json
 
 ## Dependencies
 
-ClawCC has **zero runtime dependencies**. No npm packages are used. Everything runs on the Node.js standard library.
+Fleet Control Center has **zero runtime dependencies**. No npm packages are used. Everything runs on the Node.js standard library.
 
 ### Required
 
@@ -1086,7 +1102,7 @@ ClawCC has **zero runtime dependencies**. No npm packages are used. Everything r
 
 ### No External APIs Required
 
-ClawCC does not call any external APIs, cloud services, or SaaS platforms. It is fully self-contained and air-gappable:
+Fleet Control Center does not call any external APIs, cloud services, or SaaS platforms. It is fully self-contained and air-gappable:
 
 - No analytics or telemetry sent anywhere
 - No license server or activation check
@@ -1111,7 +1127,7 @@ node test/e2e-smoke.js
 node --test test/auth/auth.test.js
 ```
 
-255 tests across 12 suites, all passing:
+833 tests across 31 suites, all passing:
 
 | Suite | Tests | Covers |
 |-------|------:|--------|
@@ -1125,8 +1141,28 @@ node --test test/auth/auth.test.js
 | Middleware | 11 | Session auth, MFA-pending blocking, node signature verification, nonce replay |
 | Router | 21 | Route matching, params, query parsing, cookie parsing, setCookie |
 | ZIP | 11 | ZIP format, CRC-32, file entries, validation |
-| SQLite | 21 | Store creation, event indexing, compound queries, heatmap, rolling usage, audit entries, JSONL catch-up, incremental sync |
+| SQLite | 21 | Store creation, event indexing, compound queries, heatmap, rolling usage, audit entries, JSONL catch-up |
 | E2E Smoke | 12 | Server startup, auth flow, security headers, static files, health endpoint, 404 handling |
+| Doctor | 34 | 12 diagnostic checks, auto-fix, backup CRUD, restore |
+| Gateway | 36 | Upstream CRUD, health checks, proxy, fan-out aggregation, persistence |
+| Agents | 34 | Registration, heartbeat, stale detection, fleet summary, timeline |
+| Agent SOUL | 6 | SOUL file CRUD, disk sync, export |
+| Channels | 33 | Broadcast/direct/group channels, message persistence, SSE |
+| Onboarding | 33 | 7-step wizard, validation, completion, security scan |
+| Knowledge Graph | 23 | Node/edge CRUD, BFS, subgraph, connected components |
+| Tenants | 23 | CRUD, slug validation, quotas, status lifecycle |
+| Webhooks | 33 | CRUD, dispatch, HMAC signing, retry, circuit breaker |
+| Tasks | 32 | Kanban CRUD, status transitions, comments, search |
+| Claude Integration | 21 | Session discovery, JSONL parsing, path traversal prevention |
+| Skills Hub | 40 | CRUD, security scanning (5 checks), install, quarantine |
+| Evaluations | 42 | 4-layer eval, quality gates, baselines, scorecards |
+| Updater | 19 | Semver comparison, release check, cache, changelog |
+| Scheduler | 49 | NL-to-cron (20+ patterns), job CRUD, tick execution |
+| Users | 25 | User management, API keys (SHA-256), role assignment |
+| Projects | 24 | CRUD, agent assignment, session linking, search |
+| Config Manager | 14 | Export, import, validation, diff, schema |
+| Security Profiles | 29 | Minimal/standard/strict profiles, event evaluation |
+| Secret Scanner | 40 | 14+ patterns, scan/mask, custom patterns, severity |
 
 Tests use `node:test` and `node:assert/strict` -- no external test frameworks.
 
@@ -1198,28 +1234,65 @@ clawcc/
   control-plane/
     server.js                 HTTP server, module initialization, CORS, config validation
     lib/
-      auth.js                 User management, sessions, RBAC, MFA, MFA-pending lifecycle
+      agents.js               Agent tracker (7 types, heartbeat, SOUL files)
+      auth.js                 User management, sessions, RBAC, MFA, API keys
       audit.js                Append-only audit logging with hash chains
+      backup.js               Backup/restore manager with manifests
+      channels.js             Agent channels (broadcast/direct/group) with SSE
+      claude-integration.js   Local tool session/project/memory discovery
+      config-manager.js       Config export/import with secret redaction
       crypto.js               PBKDF2, TOTP, HMAC, Ed25519, hash chains, recovery codes
-      events.js               Event store with async write queue and backpressure logging
-      index.js                Hybrid in-memory index layer (500K event cap, SQLite delegation)
+      doctor.js               12 diagnostic checks with auto-fix
+      evaluations.js          4-layer agent evaluation framework
+      events.js               Event store with async write queue
+      gateway.js              Multi-fleet proxy and fan-out aggregation
+      index.js                Hybrid in-memory index layer (500K cap)
       intent.js               Intent contracts and drift scoring (5 factors)
+      knowledge-graph.js      Force-directed graph with BFS traversal
+      onboarding.js           7-step setup wizard
       policy.js               Policy engine with ABAC conditions, ReDoS-safe regex
-      receipts.js             Receipt ledger with Ed25519 signing and JSONL persistence
-      router.js               HTTP router with :param support, safe URI decoding
-      snapshots.js            Session/usage/health/topology snapshots with eviction
-      sqlite-store.js         SQLite acceleration layer (optional, node:sqlite)
+      projects.js             Project management with agent assignment
+      receipts.js             Receipt ledger with Ed25519 signing
+      router.js               HTTP router with :param support
+      scheduler.js            NL-to-cron parser with job management
+      secret-scanner.js       14+ pattern secret detection
+      security-profiles.js    Minimal/standard/strict security profiles
+      skills-hub.js           Skill browsing, install, security scan
+      snapshots.js            Session/usage/health/topology snapshots
+      sqlite-store.js         SQLite acceleration (optional, node:sqlite)
+      tasks.js                Kanban task board with transitions
+      tenants.js              Multi-tenant isolation with quotas
+      updater.js              GitHub release checker with self-update
+      webhooks.js             HMAC-signed webhooks with circuit breaker
       zip.js                  ZIP file builder (deflateRaw + CRC-32)
     middleware/
-      auth-middleware.js       Session auth, MFA-pending blocking, step-up, node HMAC verification
-      security.js              Security headers, CSP nonces, rate limiting, body parsing
+      auth-middleware.js       Session/API-key auth, MFA-pending, HMAC verification
+      security.js              Security headers, CSP nonces, rate limiting
     routes/
+      agent-routes.js          Agent registration, heartbeat, SOUL, fleet summary
       auth-routes.js           Login, logout, MFA, password, step-up
+      channel-routes.js        Channel CRUD, messages, SSE stream
+      claude-routes.js         Local tool session/project discovery
+      config-routes.js         Config export, import, diff, validate
+      doctor-routes.js         Diagnostics, fix, backup, restore
+      evaluation-routes.js     Evaluations, quality gates, scorecards
       event-routes.js          Ingest, SSE stream, query, sessions, heatmap, replay
       fleet-routes.js          Node register, heartbeat, actions, topology
+      gateway-routes.js        Upstream CRUD, proxy, aggregate, status
       governance-routes.js     Policies, approvals, tripwires, skills, audit, evidence
       kill-switch.js           Emergency kill switch (session/node/global)
+      knowledge-routes.js      Knowledge graph CRUD, traversal, search
+      onboarding-routes.js     Setup wizard flow
       ops-routes.js            Health, usage, workspace, cron, logs, notifications
+      project-routes.js        Project CRUD, agent/session assignment
+      scheduler-routes.js      Job CRUD, NL parse, history
+      security-routes.js       Profiles, secret scan, security events
+      skills-hub-routes.js     Skill browse, install, scan, quarantine
+      task-routes.js           Kanban CRUD, status transitions, comments
+      tenant-routes.js         Tenant CRUD, quotas, status
+      updater-routes.js        Version check, self-update, changelog
+      user-routes.js           User CRUD, roles, API keys, activity
+      webhook-routes.js        Webhook CRUD, dispatch, delivery history
   node-agent/
     agent.js                  Node agent daemon
     lib/
@@ -1234,7 +1307,7 @@ clawcc/
       api.js                   API client
       app.js                   SPA router, keyboard shortcuts, login, modals
       sse.js                   SSE client (connect, pause, resume, reconnect)
-      pages.js                 Page renderers (7 pages)
+      pages.js                 Page renderers (21 pages)
   cli/
     clawcc.js                 CLI tool (18 commands)
   pocket/
@@ -1259,19 +1332,36 @@ clawcc/
   scripts/
     generate-demo-data.js     Demo data generator (30 days, 3 nodes)
   test/
-    run-all.js                Test runner (11 unit suites)
-    auth/crypto.test.js       27 tests: PBKDF2, TOTP, HMAC, Ed25519, chains, nonces
-    auth/auth.test.js         34 tests: users, sessions, RBAC, MFA, MFA-pending
-    sandbox/sandbox.test.js   18 tests: allowlists, traversal, symlinks
-    policy/policy.test.js     41 tests: rules, drift, enforcement, ABAC, ReDoS
-    receipts/receipts.test.js 12 tests: chains, signing, bundles
-    events/events.test.js     23 tests: ingest, redact, size, subscribe, query
-    intent/intent.test.js     24 tests: contracts, drift, path traversal
-    middleware/auth-middleware.test.js  11 tests: auth, MFA-pending, HMAC, nonce replay
-    router/router.test.js     21 tests: routing, params, cookies, query
-    zip/zip.test.js           11 tests: ZIP format, CRC-32, validation
-    sqlite/sqlite-store.test.js  21 tests: SQLite store, queries, catch-up, sync
-    e2e-smoke.js              12 tests: server startup, auth, headers, static files
+    run-all.js                Test runner (31 suites, 833 tests)
+    auth/                     Crypto (27) + Auth (34) tests
+    sandbox/                  Sandbox (18) tests
+    policy/                   Policy (41) tests
+    receipts/                 Receipts (12) tests
+    events/                   Events (23) tests
+    intent/                   Intent (24) tests
+    middleware/               Middleware (11) tests
+    router/                   Router (21) tests
+    zip/                      ZIP (11) tests
+    sqlite/                   SQLite (21) tests
+    doctor/                   Doctor + backup (34) tests
+    gateway/                  Gateway (36) tests
+    agents/                   Agents (34) + SOUL (6) tests
+    channels/                 Channels (33) tests
+    onboarding/               Onboarding (33) tests
+    knowledge/                Knowledge graph (23) tests
+    tenants/                  Tenants (23) tests
+    webhooks/                 Webhooks (33) tests
+    tasks/                    Tasks (32) tests
+    claude-integration/       Tool integration (21) tests
+    skills-hub/               Skills hub (40) tests
+    evaluations/              Evaluations (42) tests
+    updater/                  Updater (19) tests
+    scheduler/                Scheduler (49) tests
+    users/                    Users (25) tests
+    projects/                 Projects (24) tests
+    config-manager/           Config manager (14) tests
+    security/                 Profiles (29) + scanner (40) tests
+    e2e-smoke.js              E2E smoke (12) tests
   .github/
     ISSUE_TEMPLATE/
       bug_report.md            Bug report template
@@ -1294,7 +1384,7 @@ clawcc/
 
 ## Contributing
 
-Contributions are welcome. ClawCC is built for the community, and every PR, issue, and suggestion is appreciated.
+Contributions are welcome. Fleet Control Center is built for the community, and every PR, issue, and suggestion is appreciated.
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/my-feature`
@@ -1311,7 +1401,7 @@ Contributions are welcome. ClawCC is built for the community, and every PR, issu
 
 ## Star History
 
-If ClawCC helps you manage your AI agent fleet, consider giving it a star. It helps others discover the project.
+If Fleet Control Center helps you manage your AI agent fleet, consider giving it a star. It helps others discover the project.
 
 ---
 
@@ -1325,6 +1415,6 @@ MIT -- use it freely in personal and commercial projects.
 
 **Built with zero dependencies and maximum paranoia.**
 
-[Report a Bug](https://github.com/alokemajumder/clawcc/issues) | [Request a Feature](https://github.com/alokemajumder/clawcc/issues) | [Security Policy](SECURITY_ARCHITECTURE.md)
+[Report a Bug](https://github.com/alokemajumder/FleetControlCenter/issues) | [Request a Feature](https://github.com/alokemajumder/FleetControlCenter/issues) | [Security Policy](SECURITY_ARCHITECTURE.md)
 
 </div>

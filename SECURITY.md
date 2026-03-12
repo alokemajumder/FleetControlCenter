@@ -2,11 +2,11 @@
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in ClawCC, **do not open a public issue.** Security vulnerabilities must be reported privately to allow time for a fix before public disclosure.
+If you discover a security vulnerability in Fleet Control Center, **do not open a public issue.** Security vulnerabilities must be reported privately to allow time for a fix before public disclosure.
 
 ### How to Report
 
-Use [GitHub Security Advisories](https://github.com/alokemajumder/clawcc/security/advisories) to submit a private report. Include the following:
+Use [GitHub Security Advisories](https://github.com/alokemajumder/FleetControlCenter/security/advisories) to submit a private report. Include the following:
 
 1. **Description** -- A clear explanation of the vulnerability.
 2. **Steps to reproduce** -- Detailed instructions to replicate the issue.
@@ -40,7 +40,7 @@ Use [GitHub Security Advisories](https://github.com/alokemajumder/clawcc/securit
 
 ## Security Architecture
 
-For a comprehensive overview of ClawCC's security controls, threat model, and defense-in-depth design, see [SECURITY_ARCHITECTURE.md](SECURITY_ARCHITECTURE.md).
+For a comprehensive overview of Fleet Control Center's security controls, threat model, and defense-in-depth design, see [SECURITY_ARCHITECTURE.md](SECURITY_ARCHITECTURE.md).
 
 Key security features include:
 
@@ -55,7 +55,7 @@ Key security features include:
 
 ## Security-Related Configuration
 
-When deploying ClawCC, ensure the following:
+When deploying Fleet Control Center, ensure the following:
 
 1. **Change the default admin password.** The server refuses to start in production mode with the default credentials.
 2. **Generate a strong session secret:**

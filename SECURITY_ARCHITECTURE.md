@@ -1,8 +1,8 @@
-# ClawCC Security Architecture
+# Fleet Control Center Security Architecture
 
 ## 1. Overview
 
-ClawCC employs a defense-in-depth design philosophy. Every layer -- from network transport to data storage -- implements independent security controls. The system assumes a hostile environment in which any single component may be compromised, and enforces least-privilege access at every boundary.
+Fleet Control Center employs a defense-in-depth design philosophy. Every layer -- from network transport to data storage -- implements independent security controls. The system assumes a hostile environment in which any single component may be compromised, and enforces least-privilege access at every boundary.
 
 All cryptographic operations use the Node.js `node:crypto` module exclusively. No external dependencies are used anywhere in the codebase.
 

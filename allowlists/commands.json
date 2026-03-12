@@ -15,7 +15,7 @@
       "timeout": 30000,
       "requiresApproval": false,
       "riskLevel": "medium",
-      "description": "Restart the ClawCC node agent"
+      "description": "Restart the FCC node agent"
     },
     "tailscale-status": {
       "command": "tailscale",
@@ -55,7 +55,7 @@
       "timeout": 15000,
       "requiresApproval": false,
       "riskLevel": "medium",
-      "description": "Force log rotation for ClawCC"
+      "description": "Force log rotation for FCC"
     },
     "git-log": {
       "command": "git",

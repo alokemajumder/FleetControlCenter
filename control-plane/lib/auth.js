@@ -37,7 +37,11 @@ function createAuthManager(opts = {}) {
       const data = [...users.values()].map(u => ({
         username: u.username, password: u.password, role: u.role,
         mfaSecret: u.mfaSecret, mfaEnabled: u.mfaEnabled, createdAt: u.createdAt,
-        recoveryCodes: u.recoveryCodes || []
+        recoveryCodes: u.recoveryCodes || [],
+        apiKeys: u.apiKeys || [],
+        disabled: u.disabled || false,
+        loginCount: u.loginCount || 0,
+        lastLogin: u.lastLogin || null
       }));
       // Non-blocking write to avoid blocking event loop on hot paths
       fs.writeFile(fp, JSON.stringify(data, null, 2), () => {});
@@ -54,7 +58,11 @@ function createAuthManager(opts = {}) {
           username: u.username, password: u.password, role: u.role,
           mfaSecret: u.mfaSecret || null, mfaEnabled: u.mfaEnabled || false,
           createdAt: u.createdAt || Date.now(),
-          recoveryCodes: u.recoveryCodes || []
+          recoveryCodes: u.recoveryCodes || [],
+          apiKeys: u.apiKeys || [],
+          disabled: u.disabled || false,
+          loginCount: u.loginCount || 0,
+          lastLogin: u.lastLogin || null
         });
       }
     } catch { /* no saved users yet */ }
@@ -67,7 +75,7 @@ function createAuthManager(opts = {}) {
     if (users.has(username)) throw new Error('User already exists');
     if (!ROLES[role]) throw new Error(`Invalid role: ${role}`);
     const hashed = hashPassword(password);
-    const user = { username, password: hashed, role, mfaSecret: null, mfaEnabled: false, createdAt: Date.now() };
+    const user = { username, password: hashed, role, mfaSecret: null, mfaEnabled: false, createdAt: Date.now(), apiKeys: [], disabled: false, loginCount: 0, lastLogin: null };
     users.set(username, user);
     persistUsers();
     return { username, role };
@@ -87,8 +95,14 @@ function createAuthManager(opts = {}) {
       failedAttempts.set(username, record);
       throw new Error('Invalid credentials');
     }
+    if (user.disabled) {
+      throw new Error('Account disabled');
+    }
     // Reset on success
     failedAttempts.delete(username);
+    user.loginCount = (user.loginCount || 0) + 1;
+    user.lastLogin = Date.now();
+    persistUsers();
     return { username: user.username, role: user.role, mfaEnabled: user.mfaEnabled };
   }
 
@@ -201,6 +215,100 @@ function createAuthManager(opts = {}) {
     return session.stepUpAt || 0;
   }
 
+  function deleteUser(username) {
+    if (!users.has(username)) throw new Error('User not found');
+    users.delete(username);
+    persistUsers();
+  }
+
+  function createApiKey(username) {
+    const user = users.get(username);
+    if (!user) throw new Error('User not found');
+    const plainKey = crypto.randomBytes(32).toString('hex');
+    const hash = crypto.createHash('sha256').update(plainKey).digest('hex');
+    const prefix = plainKey.slice(0, 8);
+    if (!user.apiKeys) user.apiKeys = [];
+    user.apiKeys.push({ hash, prefix, createdAt: Date.now(), lastUsedAt: null });
+    persistUsers();
+    return { key: plainKey, prefix };
+  }
+
+  function revokeApiKey(username, keyPrefix) {
+    const user = users.get(username);
+    if (!user) throw new Error('User not found');
+    if (!user.apiKeys) return false;
+    const idx = user.apiKeys.findIndex(k => k.prefix === keyPrefix);
+    if (idx === -1) return false;
+    user.apiKeys.splice(idx, 1);
+    persistUsers();
+    return true;
+  }
+
+  function listApiKeys(username) {
+    const user = users.get(username);
+    if (!user) throw new Error('User not found');
+    return (user.apiKeys || []).map(k => ({ prefix: k.prefix, createdAt: k.createdAt, lastUsedAt: k.lastUsedAt }));
+  }
+
+  function authenticateByApiKey(key) {
+    const hash = crypto.createHash('sha256').update(key).digest('hex');
+    for (const user of users.values()) {
+      if (!user.apiKeys) continue;
+      const found = user.apiKeys.find(k => k.hash === hash);
+      if (found) {
+        if (user.disabled) return null;
+        found.lastUsedAt = Date.now();
+        persistUsers();
+        return { username: user.username, role: user.role, mfaEnabled: user.mfaEnabled };
+      }
+    }
+    return null;
+  }
+
+  function listAllUsers() {
+    return [...users.values()].map(u => ({
+      username: u.username, role: u.role, mfaEnabled: u.mfaEnabled,
+      disabled: u.disabled || false, createdAt: u.createdAt,
+      apiKeyCount: (u.apiKeys || []).length, loginCount: u.loginCount || 0,
+      lastLogin: u.lastLogin || null
+    }));
+  }
+
+  function setUserRole(username, role) {
+    const user = users.get(username);
+    if (!user) throw new Error('User not found');
+    if (!ROLES[role]) throw new Error(`Invalid role: ${role}`);
+    user.role = role;
+    persistUsers();
+    return { username: user.username, role: user.role };
+  }
+
+  function disableUser(username) {
+    const user = users.get(username);
+    if (!user) throw new Error('User not found');
+    user.disabled = true;
+    persistUsers();
+  }
+
+  function enableUser(username) {
+    const user = users.get(username);
+    if (!user) throw new Error('User not found');
+    user.disabled = false;
+    persistUsers();
+  }
+
+  function getUserActivity(username) {
+    const user = users.get(username);
+    if (!user) throw new Error('User not found');
+    return {
+      lastLogin: user.lastLogin || null,
+      loginCount: user.loginCount || 0,
+      mfaEnabled: user.mfaEnabled || false,
+      apiKeyCount: (user.apiKeys || []).length,
+      createdAt: user.createdAt
+    };
+  }
+
   function createDefaultAdmin(password = 'admin') {
     if (!users.has('admin')) {
       return createUser('admin', password, 'admin');
@@ -239,7 +347,9 @@ function createAuthManager(opts = {}) {
     createUser, authenticate, createSession, upgradeSession, validateSession, destroySession,
     rotateSession, checkPermission, setupMFA, verifyMFA,
     stepUpAuth, requireStepUp, createDefaultAdmin, getUser, listUsers,
-    changePassword, updatePassword, getStepUpAt, useRecoveryCode
+    changePassword, updatePassword, getStepUpAt, useRecoveryCode,
+    deleteUser, createApiKey, revokeApiKey, listApiKeys, authenticateByApiKey,
+    listAllUsers, setUserRole, disableUser, enableUser, getUserActivity
   };
 }
 

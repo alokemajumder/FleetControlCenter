@@ -1,8 +1,8 @@
-# ClawCC Compliance Pack
+# Fleet Control Center Compliance Pack
 
 ## 1. Overview
 
-This document maps ClawCC's security and governance controls to widely recognized compliance frameworks. ClawCC produces machine-verifiable evidence artifacts suitable for SOC 2 Type II, ISO 27001, and NIST Cybersecurity Framework (CSF) audits.
+This document maps Fleet Control Center's security and governance controls to widely recognized compliance frameworks. Fleet Control Center produces machine-verifiable evidence artifacts suitable for SOC 2 Type II, ISO 27001, and NIST Cybersecurity Framework (CSF) audits.
 
 All evidence is stored in append-only, hash-chained formats with Ed25519 digital signatures for tamper detection.
 
@@ -12,7 +12,7 @@ All evidence is stored in append-only, hash-chained formats with Ed25519 digital
 
 ### 2.1 SOC 2 Trust Service Criteria
 
-| TSC   | Control                    | ClawCC Implementation                                                                                                                    | Evidence                                |
+| TSC   | Control                    | FCC Implementation                                                                                                                    | Evidence                                |
 |-------|----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------|
 | CC3.1 | Risk assessment            | Policy engine with enforcement ladder, sandbox enforcement, tripwires with auto-quarantine                                                | Policy files, tripwire configurations   |
 | CC6.1 | Logical access controls    | RBAC (4 roles: viewer, operator, auditor, admin), PBKDF2 passwords (100K iterations, SHA-512), session tokens (256-bit)                   | `data/users/users.json`, audit logs     |
@@ -29,7 +29,7 @@ All evidence is stored in append-only, hash-chained formats with Ed25519 digital
 
 ### 2.2 ISO 27001 Annex A
 
-| Control | Description                              | ClawCC Implementation                                                                                                   | Evidence                                |
+| Control | Description                              | FCC Implementation                                                                                                   | Evidence                                |
 |---------|------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|-----------------------------------------|
 | A.5.1   | Information security policies            | Policy engine with versioned JSON rules, ABAC conditions                                                                | `policies/*.json`                       |
 | A.6.1   | Organization of information security     | RBAC roles (4 levels), separation of duties (4-eyes approval with self-approve prevention)                              | User roles, approval workflow           |
@@ -49,7 +49,7 @@ All evidence is stored in append-only, hash-chained formats with Ed25519 digital
 
 ### 2.3 NIST Cybersecurity Framework (CSF)
 
-| Function | Category | Subcategory          | ClawCC Implementation                                                                              |
+| Function | Category | Subcategory          | FCC Implementation                                                                              |
 |----------|----------|----------------------|----------------------------------------------------------------------------------------------------|
 | Identify | ID.AM    | Asset Management     | Fleet registry, node heartbeats, topology snapshots                                                |
 | Identify | ID.RA    | Risk Assessment      | Policy engine with ABAC, drift scoring (5 factors), tripwires                                      |

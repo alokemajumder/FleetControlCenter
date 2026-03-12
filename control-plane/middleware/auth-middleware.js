@@ -7,6 +7,20 @@ const { createNonceTracker } = require('../lib/crypto');
 const nonceTracker = createNonceTracker(300000); // 5 min window
 
 function authenticate(req, authModule) {
+  // Try API key auth first: Authorization: Bearer <key> or X-API-Key: <key>
+  const authHeader = req.headers && req.headers['authorization'];
+  const apiKeyHeader = req.headers && req.headers['x-api-key'];
+  const apiKey = apiKeyHeader || (authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null);
+  if (apiKey && authModule.authenticateByApiKey) {
+    const user = authModule.authenticateByApiKey(apiKey);
+    if (user) {
+      return { authenticated: true, user, viaApiKey: true };
+    }
+    // If an API key was explicitly provided but invalid, reject immediately
+    return { authenticated: false, error: 'Invalid API key' };
+  }
+
+  // Fall back to session cookie auth
   const token = req.cookies && req.cookies.clawcc_session;
   if (!token) {
     return { authenticated: false, error: 'No session cookie' };

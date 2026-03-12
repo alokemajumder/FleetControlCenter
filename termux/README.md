@@ -1,6 +1,6 @@
-# ClawCC Termux Module
+# Fleet Control Center Termux Module
 
-Run the ClawCC node agent or CLI on Android via Termux.
+Run the Fleet Control Center node agent or CLI on Android via Termux.
 
 ## Prerequisites
 

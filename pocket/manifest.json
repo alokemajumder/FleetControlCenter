@@ -1,11 +1,11 @@
 {
-  "name": "ClawCC Pocket",
-  "short_name": "ClawCC",
+  "name": "FCC Pocket",
+  "short_name": "FCC",
   "start_url": "/pocket/",
   "display": "standalone",
   "background_color": "#0a0a0f",
   "theme_color": "#0a0a0f",
-  "description": "Mobile operations console for ClawCC Fleet Control Center",
+  "description": "Mobile operations console for Fleet Control Center",
   "icons": [
     {
       "src": "icon-192.png",

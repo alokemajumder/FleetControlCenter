@@ -1,17 +1,17 @@
 {
   "name": "clawcc",
-  "version": "0.1.0",
-  "description": "Self-hosted control plane for AI agent fleet management. Pure Node.js, zero dependencies.",
+  "version": "0.2.0",
+  "description": "Fleet Control Center (FCC) — self-hosted AI agent fleet management. Pure Node.js, zero dependencies.",
   "author": "Aloke Majumder",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/alokemajumder/clawcc.git"
+    "url": "https://github.com/alokemajumder/FleetControlCenter.git"
   },
   "bugs": {
-    "url": "https://github.com/alokemajumder/clawcc/issues"
+    "url": "https://github.com/alokemajumder/FleetControlCenter/issues"
   },
-  "homepage": "https://github.com/alokemajumder/clawcc",
+  "homepage": "https://github.com/alokemajumder/FleetControlCenter",
   "engines": {
     "node": ">=18.0.0"
   },

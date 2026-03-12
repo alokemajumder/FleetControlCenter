@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0a0a0f">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>ClawCC Pocket</title>
+  <title>FCC Pocket</title>
   <link rel="manifest" href="manifest.json">
   <style>
     :root {
@@ -71,7 +71,7 @@
 <body>
   <div id="login-screen" class="login-screen">
     <div class="login-card">
-      <h2>ClawCC Pocket</h2>
+      <h2>FCC Pocket</h2>
       <input type="text" id="login-user" placeholder="Username" autocomplete="username">
       <input type="password" id="login-pass" placeholder="Password" autocomplete="current-password">
       <div id="login-mfa" class="hidden">
@@ -84,7 +84,7 @@
 
   <div id="app" class="hidden">
     <div class="topbar">
-      <div><span class="status-dot" id="conn-dot"></span><h1 style="display:inline">ClawCC</h1></div>
+      <div><span class="status-dot" id="conn-dot"></span><h1 style="display:inline">FCC</h1></div>
       <span id="topbar-info" style="color:var(--muted);font-size:0.8rem;"></span>
     </div>
 
@@ -346,7 +346,7 @@
       try {
         await api('POST', '/api/ops/notifications/test');
         if (Notification.permission === 'granted') {
-          new Notification('ClawCC Alert', { body: 'Test notification from ClawCC Pocket', tag: 'clawcc-test' });
+          new Notification('FCC Alert', { body: 'Test notification from FCC Pocket', tag: 'fcc-test' });
         }
       } catch (e) { /* ignore */ }
     }

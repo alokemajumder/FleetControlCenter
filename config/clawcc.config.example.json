@@ -71,5 +71,10 @@
     "enabled": true,
     "path": "./data/index.sqlite",
     "walMode": true
+  },
+  "gateway": {
+    "enabled": false,
+    "upstreams": [],
+    "healthCheckIntervalMs": 30000
   }
 }

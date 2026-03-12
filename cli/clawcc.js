@@ -213,7 +213,7 @@ function colorSeverity(severity) {
 // ── Commands ──
 
 async function cmdInit() {
-  out(bold('Initializing ClawCC configuration...'));
+  out(bold('Initializing Fleet Control Center configuration...'));
   if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
 
   const configPath = path.join(CONFIG_DIR, 'config.json');
@@ -554,12 +554,12 @@ async function cmdKeygen() {
 
 function showHelp() {
   out(`
-${bold('ClawCC')} - AI Agent Fleet Control Center CLI v${VERSION}
+${bold('Fleet Control Center')} CLI v${VERSION}
 
 ${bold('Usage:')} clawcc <command> [options]
 
 ${bold('Commands:')}
-  init              Initialize ClawCC configuration
+  init              Initialize FCC configuration
   enroll            Enroll a node into the fleet
   status            Show fleet status
   nodes             List fleet nodes
@@ -641,7 +641,7 @@ async function main() {
       }
       break;
     case 'keygen': return cmdKeygen();
-    case 'version': out(`ClawCC v${VERSION}`); break;
+    case 'version': out(`Fleet Control Center v${VERSION}`); break;
     case 'help': case '--help': case '-h': case undefined: showHelp(); break;
     default: err(`Unknown command: ${cmd}`); showHelp(); process.exit(1);
   }

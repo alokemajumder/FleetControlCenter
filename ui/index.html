@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ClawCC - Fleet Control Center</title>
+  <title>FCC - Fleet Control Center</title>
   <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
@@ -11,8 +11,8 @@
   <!-- Sidebar -->
   <aside id="sidebar">
     <div class="logo">
-      <div class="logo-icon">C</div>
-      <span>ClawCC</span>
+      <div class="logo-icon">F</div>
+      <span>FCC</span>
     </div>
     <nav>
       <a href="#" data-page="fleet" class="active">
@@ -43,6 +43,37 @@
         <span>Governance</span>
         <span class="shortcut">7</span>
       </a>
+      <a href="#" data-page="agents">
+        <span>Agents</span>
+        <span class="shortcut">8</span>
+      </a>
+      <a href="#" data-page="channels">
+        <span>Channels</span>
+        <span class="shortcut">9</span>
+      </a>
+      <a href="#" data-page="knowledge">
+        <span>Knowledge</span>
+        <span class="shortcut">0</span>
+      </a>
+      <a href="#" data-page="doctor">
+        <span>Doctor</span>
+      </a>
+      <a href="#" data-page="gateway">
+        <span>Gateway</span>
+      </a>
+      <div class="nav-divider"></div>
+      <div class="nav-section">Agent Ops</div>
+      <a href="#" data-page="tasks"><span>Tasks</span></a>
+      <a href="#" data-page="claude"><span>Claude Code</span></a>
+      <a href="#" data-page="skills"><span>Skills Hub</span></a>
+      <a href="#" data-page="evaluations"><span>Evaluations</span></a>
+      <div class="nav-divider"></div>
+      <div class="nav-section">System</div>
+      <a href="#" data-page="webhooks"><span>Webhooks</span></a>
+      <a href="#" data-page="scheduler"><span>Scheduler</span></a>
+      <a href="#" data-page="security"><span>Security</span></a>
+      <a href="#" data-page="users"><span>Users</span></a>
+      <a href="#" data-page="projects"><span>Projects</span></a>
     </nav>
     <div class="sidebar-footer">
       Press <kbd>?</kbd> for shortcuts
@@ -59,6 +90,7 @@
       </div>
     </div>
     <div class="topbar-right">
+      <span class="connection-status" id="connection-status" title="Connected">&#x25CF;</span>
       <button class="notification-bell" title="Notifications">
         &#x1F514;
         <span class="bell-dot"></span>
@@ -96,6 +128,9 @@
         <li><span>Memory & Files</span><kbd>5</kbd></li>
         <li><span>Ops</span><kbd>6</kbd></li>
         <li><span>Governance</span><kbd>7</kbd></li>
+        <li><span>Agents</span><kbd>8</kbd></li>
+        <li><span>Channels</span><kbd>9</kbd></li>
+        <li><span>Knowledge</span><kbd>0</kbd></li>
         <li><span>Search</span><kbd>/</kbd></li>
         <li><span>Pause / Resume Live Feed</span><kbd>Space</kbd></li>
         <li><span>Close Panel / Modal</span><kbd>Esc</kbd></li>
