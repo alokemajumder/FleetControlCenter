@@ -260,7 +260,10 @@ function registerChannelRoutes(router, config, modules) {
 
     const maxLifetime = setTimeout(() => { cleanup(); }, 3600000);
 
+    let cleanedUp = false;
     function cleanup() {
+      if (cleanedUp) return;
+      cleanedUp = true;
       channelManager.unsubscribe(channelId, onMessage);
       clearInterval(keepalive);
       clearTimeout(maxLifetime);

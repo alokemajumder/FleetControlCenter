@@ -277,10 +277,19 @@ const receipts = {
   createReceipt: receiptStore.createReceipt,
   verify(dataDir, date, publicKey) { return receiptStore.verifyChain(); },
   exportBundle(dataDir, sessionId, opts) {
-    return receiptStore.exportBundle();
+    return receiptStore.exportBundle(0, undefined, { sessionId, ...opts });
   },
   verifyBundle(bundle) { return receiptStore.verifyBundle(bundle); },
-  getSessionReceipt(sessionId) { return null; },
+  getSessionReceipt(sessionId) {
+    const all = receiptStore.getReceipts();
+    for (const r of all) {
+      try {
+        const parsed = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
+        if (parsed && parsed.sessionId === sessionId) return r;
+      } catch { /* skip unparseable */ }
+    }
+    return null;
+  },
   signDailyRoot: receiptStore.signDailyRoot
 };
 
@@ -309,8 +318,104 @@ const policy = {
     } catch {}
     return policies;
   },
-  evaluateEvent: (policies, event) => ({ violations: [] }),
-  evaluateSession: (policies, events) => ({ driftScore: 0, violations: [], reasons: [] }),
+  evaluateEvent(policies, event) {
+    const violations = [];
+    const ctx = { ...event, ...(event.payload || {}) };
+    for (const pol of policies) {
+      if (pol.enabled === false) continue;
+      for (const rule of (pol.rules || [])) {
+        const evalRule = rule.condition ? { ...rule.condition } : rule;
+        // Only evaluate event-level and action-level rules for single events
+        const ruleType = evalRule.type || 'event';
+        if (ruleType !== 'event' && ruleType !== 'action') continue;
+        if (policyEngine.evaluateRule(evalRule, ctx)) {
+          violations.push({
+            policyId: pol.id,
+            policyName: pol.name,
+            ruleId: rule.id || evalRule.field,
+            enforcement: rule.enforcement || rule.action || 'warn',
+            message: rule.message || ''
+          });
+        }
+      }
+    }
+    return { violations };
+  },
+  evaluateSession(policies, sessionEvents) {
+    let driftScore = 0;
+    const violations = [];
+    const reasons = [];
+    for (const pol of policies) {
+      if (pol.enabled === false) continue;
+      // Build session-level aggregate context
+      let errorCount = 0;
+      let totalCost = 0;
+      for (const ev of sessionEvents) {
+        if (ev.severity === 'error' || ev.severity === 'critical' || (ev.type && ev.type.includes('error'))) errorCount++;
+        if (ev.payload && typeof ev.payload.cost === 'number') totalCost += ev.payload.cost;
+      }
+      const sessionCtx = { errors: errorCount, cost: totalCost };
+      for (const rule of (pol.rules || [])) {
+        const evalRule = rule.condition ? { ...rule.condition } : rule;
+        const ruleType = evalRule.type || 'event';
+        if (ruleType === 'session') {
+          // Evaluate session-aggregate rules against the aggregate context
+          if (policyEngine.evaluateRule(evalRule, sessionCtx)) {
+            violations.push({
+              policyId: pol.id,
+              policyName: pol.name,
+              ruleId: rule.id || evalRule.field,
+              enforcement: rule.enforcement || rule.action || 'warn',
+              message: rule.message || ''
+            });
+            reasons.push(rule.message || (rule.id + ' triggered'));
+          }
+        } else if (ruleType === 'drift') {
+          // Evaluate drift rules: check drift score against threshold
+          // First, compute drift via the engine if the policy is loaded
+          const driftResult = policyEngine.evaluateDriftScore(sessionEvents, pol.id, sessionCtx);
+          if (driftResult.score > driftScore) driftScore = driftResult.score;
+          // Also check if this specific drift-threshold rule fires
+          const driftCtx = { score: driftResult.score };
+          if (policyEngine.evaluateRule(evalRule, driftCtx)) {
+            violations.push({
+              policyId: pol.id,
+              policyName: pol.name,
+              ruleId: rule.id || evalRule.field,
+              enforcement: rule.enforcement || rule.action || 'warn',
+              message: rule.message || ''
+            });
+            reasons.push(rule.message || (rule.id + ' triggered'));
+          }
+        } else if (ruleType === 'event' || ruleType === 'action') {
+          // Also check event-level rules against each session event
+          for (const ev of sessionEvents) {
+            const ctx = { ...ev, ...(ev.payload || {}) };
+            if (policyEngine.evaluateRule(evalRule, ctx)) {
+              violations.push({
+                policyId: pol.id,
+                policyName: pol.name,
+                ruleId: rule.id || evalRule.field,
+                enforcement: rule.enforcement || rule.action || 'warn',
+                message: rule.message || '',
+                eventTs: ev.ts || ev.timestamp
+              });
+              reasons.push(rule.message || (rule.id + ' triggered'));
+              break; // one violation per rule is sufficient for session summary
+            }
+          }
+        }
+      }
+      // Check enforcement ladder for highest-severity action
+      if (driftScore > 0) {
+        const action = policyEngine.getEnforcementAction(driftScore, pol.id);
+        if (action !== 'none') {
+          reasons.push('Enforcement action: ' + action + ' (drift score ' + driftScore + ')');
+        }
+      }
+    }
+    return { driftScore, violations, reasons };
+  },
   simulatePolicy(targetPolicy, sessionEvents) {
     const timeline = sessionEvents.map((event, i) => {
       const matched = [];
@@ -670,7 +775,7 @@ async function handleRequest(req, res) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,X-ClawCC-NodeId,X-ClawCC-Timestamp,X-ClawCC-Nonce,X-ClawCC-Signature,X-API-Key,Authorization');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,X-FCC-NodeId,X-FCC-Timestamp,X-FCC-Nonce,X-FCC-Signature,X-API-Key,Authorization');
   }
   if (req.method === 'OPTIONS') {
     res.writeHead(204);

@@ -129,9 +129,9 @@ function sendEvent(baseUrl, event, nodeSecret) {
       headers: {
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(data),
-        'X-ClawCC-Timestamp': timestamp,
-        'X-ClawCC-Nonce': nonce,
-        'X-ClawCC-Signature': signature
+        'X-FCC-Timestamp': timestamp,
+        'X-FCC-Nonce': nonce,
+        'X-FCC-Signature': signature
       }
     };
 

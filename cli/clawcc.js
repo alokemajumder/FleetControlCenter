@@ -10,7 +10,7 @@ const os = require('node:os');
 const readline = require('node:readline');
 
 // ── Version ──
-const VERSION = '0.1.0';
+const VERSION = '0.2.0';
 
 // ── ANSI Colors ──
 const colors = {
@@ -142,29 +142,6 @@ function confirm(message) {
 }
 
 // ── Parse args ──
-function parseArgs(argv) {
-  const args = { _: [], options: {} };
-  let i = 0;
-  while (i < argv.length) {
-    const arg = argv[i];
-    if (arg === '--no-color') {
-      args.options.noColor = true;
-    } else if (arg.startsWith('--')) {
-      const key = arg.slice(2);
-      if (i + 1 < argv.length && !argv[i + 1].startsWith('--')) {
-        args.options[key] = argv[++i];
-      } else {
-        args.options[key] = true;
-      }
-    } else {
-      args._push(arg);
-    }
-    i++;
-  }
-  return args;
-}
-
-// Safer arg parser that doesn't break on _push
 function parseArgv(argv) {
   const positional = [];
   const options = {};
@@ -538,6 +515,38 @@ async function cmdReceiptsVerify(host, token, options) {
   } catch (e) { err(e.message); }
 }
 
+async function cmdDrift(host, token, sessionId, format) {
+  if (!sessionId) { err('Usage: clawcc drift <session-id>'); process.exit(1); }
+  try {
+    const res = await request('GET', `${host}/api/evaluations/agent/${sessionId}/drift`, null, token);
+    if (format === 'json') {
+      out(JSON.stringify(res.data, null, 2));
+      return;
+    }
+    if (!res.data.success) {
+      err(res.data.error || 'Failed to get drift data');
+      return;
+    }
+    const drift = res.data.drift || {};
+    out(bold('Drift Report'));
+    out(`  Session/Agent: ${sessionId}`);
+    out(`  Drift Score:   ${drift.score != null ? String(drift.score) : 'N/A'}`);
+    out(`  Drifted:       ${drift.drifted ? c('red', 'yes') : c('green', 'no')}`);
+    if (drift.violations && drift.violations.length > 0) {
+      out(`\n${bold('Violations:')}`);
+      for (const v of drift.violations) {
+        out(`  - ${c('yellow', v.field || v.metric || 'unknown')}: ${v.reason || v.message || JSON.stringify(v)}`);
+      }
+    }
+    if (drift.reasons && drift.reasons.length > 0) {
+      out(`\n${bold('Reasons:')}`);
+      for (const r of drift.reasons) {
+        out(`  - ${r}`);
+      }
+    }
+  } catch (e) { err(e.message); }
+}
+
 async function cmdKeygen() {
   const { publicKey, privateKey } = crypto.generateKeyPairSync('ed25519', {
     publicKeyEncoding: { type: 'spki', format: 'pem' },
@@ -571,6 +580,7 @@ ${bold('Commands:')}
   kill session <id> Kill a session
   kill node <id>    Kill all sessions on a node
   kill global       Global kill switch
+  drift <session>   Show drift score and violations
   verify <path>     Verify an evidence bundle
   export <session>  Export evidence bundle for session
   users list        List users
@@ -625,6 +635,7 @@ async function main() {
         default: err(`Unknown kill subcommand: ${sub}`); showHelp(); process.exit(1);
       }
       break;
+    case 'drift': return cmdDrift(host, token, sub, format);
     case 'verify': return cmdVerify(sub);
     case 'export': return cmdExport(host, token, sub);
     case 'users':

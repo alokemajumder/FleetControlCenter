@@ -3,11 +3,10 @@ const fs = require('fs');
 const path = require('path');
 const { parseBody } = require('../middleware/security');
 const { authenticate, verifyNodeSignature } = require('../middleware/auth-middleware');
+const { queueCommand, drainCommands, PER_NODE_MAX } = require('../lib/fleet-commands');
 
 function registerFleetRoutes(router, config, modules) {
   const { auth, audit, events, index, snapshots, crypto: cryptoMod } = modules;
-  const pendingCommands = new Map(); // nodeId -> commands[]
-  const PENDING_COMMANDS_MAX = 500; // max total commands across all nodes
 
   function loadFleetNodes() {
     return index ? index.getFleetNodes(config.dataDir) : {};
@@ -55,17 +54,18 @@ function registerFleetRoutes(router, config, modules) {
     if (!nodeId) return res.error(400, 'nodeId required');
 
     const nodes = loadFleetNodes();
-    if (nodes[nodeId]) {
-      nodes[nodeId].lastSeen = new Date().toISOString();
-      nodes[nodeId].status = 'online';
-      saveFleetNodes(nodes);
+    if (!nodes[nodeId]) {
+      return res.json(200, { success: false, registered: false, message: 'Node not registered. Please re-register.' });
     }
+
+    nodes[nodeId].lastSeen = new Date().toISOString();
+    nodes[nodeId].status = 'online';
+    saveFleetNodes(nodes);
 
     events.ingest({ ts: new Date().toISOString(), nodeId, sessionId: null, type: 'node.heartbeat', severity: 'info', payload: { health, sessions } });
     snapshots.update(config.dataDir, { type: 'node.heartbeat', nodeId, payload: { health } });
 
-    const commands = pendingCommands.get(nodeId) || [];
-    pendingCommands.set(nodeId, []);
+    const commands = drainCommands(nodeId);
     res.json(200, { success: true, commands });
   });
 
@@ -112,17 +112,8 @@ function registerFleetRoutes(router, config, modules) {
     try { body = await parseBody(req); } catch (err) { return res.error(400, err.message); }
     const commandId = require('crypto').randomUUID();
     const command = { id: commandId, action: body.action, args: body.args, requestedBy: authResult.user.username, ts: new Date().toISOString() };
-    const cmds = pendingCommands.get(req.params.nodeId) || [];
-    // Cap per-node command queue at 50
-    if (cmds.length >= 50) return res.error(429, 'Too many pending commands for this node');
-    cmds.push(command);
-    pendingCommands.set(req.params.nodeId, cmds);
-    // Evict nodes with no pending commands if map is too large
-    if (pendingCommands.size > PENDING_COMMANDS_MAX) {
-      for (const [nid, ncmds] of pendingCommands) {
-        if (ncmds.length === 0) pendingCommands.delete(nid);
-      }
-    }
+    const result = queueCommand(req.params.nodeId, command);
+    if (!result.queued) return res.error(429, result.reason);
     audit.log({ actor: authResult.user.username, action: 'node.action', target: req.params.nodeId, detail: JSON.stringify(body) });
     res.json(200, { success: true, queued: true, commandId });
   });

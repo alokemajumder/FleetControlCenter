@@ -108,10 +108,10 @@ describe('verifyNodeSignature()', () => {
     const path = '/api/nodes/heartbeat';
     const sig = signRequest(validSecret, method, path, ts, '');
     return {
-      'x-clawcc-nodeid': 'node-1',
-      'x-clawcc-timestamp': ts,
-      'x-clawcc-nonce': nonce,
-      'x-clawcc-signature': sig
+      'x-fcc-nodeid': 'node-1',
+      'x-fcc-timestamp': ts,
+      'x-fcc-nonce': nonce,
+      'x-fcc-signature': sig
     };
   }
 
@@ -129,10 +129,10 @@ describe('verifyNodeSignature()', () => {
     const sig = signRequest(validSecret, 'POST', '/api/nodes/heartbeat', ts, '');
     const req = makeNodeRequest({
       headers: {
-        'x-clawcc-nodeid': 'node-1',
-        'x-clawcc-timestamp': ts,
-        'x-clawcc-nonce': nonce,
-        'x-clawcc-signature': sig
+        'x-fcc-nodeid': 'node-1',
+        'x-fcc-timestamp': ts,
+        'x-fcc-nonce': nonce,
+        'x-fcc-signature': sig
       }
     });
     const config = { sessionSecret: validSecret };

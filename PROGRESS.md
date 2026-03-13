@@ -46,7 +46,7 @@ These constraints are non-negotiable and fully satisfied.
 | /control-plane | 55    | Complete | Server, router, 2 middleware, 24 route groups, 31 library modules |
 | /node-agent    | 5     | Complete | Daemon, discovery, telemetry, sandbox, spool                    |
 | /ui            | 6     | Complete | Static SPA with glassmorphic dark theme, 21 pages               |
-| /cli           | 1     | Complete | 18 commands with ANSI colors and table formatting               |
+| /cli           | 1     | Complete | 20 commands with ANSI colors and table formatting               |
 | /pocket        | 3     | Complete | PWA shell, manifest, service worker                             |
 | /termux        | 2     | Complete | Setup script and README                                         |
 | /config        | 2     | Complete | Example configs for control plane and node agent                |

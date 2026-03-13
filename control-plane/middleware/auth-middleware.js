@@ -64,10 +64,10 @@ function requireStepUp(req, authModule, config) {
 }
 
 function verifyNodeSignature(req, config, cryptoModule) {
-  const nodeId = req.headers['x-clawcc-nodeid'];
-  const timestamp = req.headers['x-clawcc-timestamp'];
-  const nonce = req.headers['x-clawcc-nonce'];
-  const signature = req.headers['x-clawcc-signature'];
+  const nodeId = req.headers['x-fcc-nodeid'];
+  const timestamp = req.headers['x-fcc-timestamp'];
+  const nonce = req.headers['x-fcc-nonce'];
+  const signature = req.headers['x-fcc-signature'];
 
   if (!nodeId || !timestamp || !nonce || !signature) {
     return { valid: false, error: 'Missing required signature headers' };
@@ -91,8 +91,8 @@ function verifyNodeSignature(req, config, cryptoModule) {
   const secret = nodeSecret || config.sessionSecret;
 
   const method = req.method;
-  const path = req.url;
-  const valid = cryptoModule.verifyRequest(secret, method, path, timestamp, '', signature, maxAge);
+  const urlPath = new URL(req.url, 'http://localhost').pathname;
+  const valid = cryptoModule.verifyRequest(secret, method, urlPath, timestamp, '', signature, maxAge);
 
   if (!valid) {
     return { valid: false, error: 'Invalid signature' };

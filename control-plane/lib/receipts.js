@@ -131,9 +131,15 @@ function createReceiptStore(opts = {}) {
     return verify(root.rootHash, root.signature, verifyKey);
   }
 
-  function exportBundle(startIndex = 0, endIndex) {
+  function exportBundle(startIndex = 0, endIndex, opts = {}) {
     const end = endIndex != null ? endIndex : receipts.length;
-    const bundle = receipts.slice(startIndex, end);
+    let bundle = receipts.slice(startIndex, end);
+    if (opts.sessionId) {
+      bundle = bundle.filter(r => {
+        const data = typeof r.data === 'string' ? r.data : JSON.stringify(r.data);
+        return data.includes(opts.sessionId);
+      });
+    }
     const bundleHash = hashData(JSON.stringify(bundle));
     const signature = sign(bundleHash, signingKey);
     return { receipts: bundle, hash: bundleHash, signature };

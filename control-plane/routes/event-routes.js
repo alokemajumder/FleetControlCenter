@@ -52,7 +52,10 @@ function registerEventRoutes(router, config, modules) {
     if (req.query.severity) filter.severity = req.query.severity;
 
     const unsubscribe = events.subscribe(filter, (event) => {
-      try { res.write('data: ' + JSON.stringify(event) + '\n\n'); } catch {}
+      try {
+        const ok = res.write('data: ' + JSON.stringify(event) + '\n\n');
+        if (!ok) { /* backpressure: skip event, SSE is best-effort */ }
+      } catch {}
     });
 
     const keepalive = setInterval(() => {

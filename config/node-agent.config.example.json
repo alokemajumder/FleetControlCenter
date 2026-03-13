@@ -1,7 +1,7 @@
 {
   "nodeId": "",
   "controlPlaneUrl": "http://localhost:3400",
-  "nodeSecret": "CHANGE_ME_TO_A_STRONG_SECRET",
+  "nodeSecret": "CHANGE_ME_GENERATE_WITH_openssl_rand_hex_32",
   "tags": ["dev"],
   "discoveryPaths": [
     "~/.claude", "~/.codex", "~/.copilot", "~/.cursor",

@@ -19,7 +19,11 @@
   },
   "fleet": {
     "heartbeatTimeoutMs": 60000,
-    "maxNodes": 100
+    "maxNodes": 100,
+    "nodeSecrets": {
+      "_comment": "Map of nodeId -> shared secret. Nodes not listed here fall back to sessionSecret.",
+      "example-node-id": "CHANGE_ME_GENERATE_WITH_openssl_rand_hex_32"
+    }
   },
   "events": {
     "maxPayloadBytes": 65536,

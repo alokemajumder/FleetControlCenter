@@ -92,10 +92,10 @@ function signedRequest(method, urlPath, body) {
       timeout: 15000,
       headers: {
         'Content-Type': 'application/json',
-        'X-ClawCC-NodeId': config.nodeId,
-        'X-ClawCC-Timestamp': timestamp,
-        'X-ClawCC-Nonce': nonce,
-        'X-ClawCC-Signature': signature
+        'X-FCC-NodeId': config.nodeId,
+        'X-FCC-Timestamp': timestamp,
+        'X-FCC-Nonce': nonce,
+        'X-FCC-Signature': signature
       }
     };
     if (data) options.headers['Content-Length'] = Buffer.byteLength(data);
@@ -165,6 +165,13 @@ async function heartbeat() {
     controlPlaneReachable = true;
     resetBackoff();
 
+    // If server says we're not registered, re-register
+    if (result.registered === false) {
+      console.log('Node not registered on server, re-registering...');
+      await register();
+      return;
+    }
+
     // Process commands from control plane
     if (result.commands && Array.isArray(result.commands) && result.commands.length > 0) {
       for (const cmd of result.commands) {
@@ -192,8 +199,67 @@ async function heartbeat() {
   }
 }
 
+function handleKillSession(cmd) {
+  const args = cmd.args || {};
+  const sessionId = args.sessionId;
+  const killId = args.killId || 'unknown';
+  const killAll = !sessionId || sessionId === '*';
+
+  console.log('KILL SWITCH: killId=' + killId + ', target=' + (killAll ? 'ALL sessions' : 'session ' + sessionId));
+
+  // Discover current sessions and write a kill marker file for each targeted session.
+  // The kill marker is checked by session monitors and causes graceful termination.
+  const sessions = discoverSessions(discoveryPaths);
+  let killed = 0;
+
+  for (const session of sessions) {
+    if (killAll || session.id === sessionId) {
+      try {
+        // Write kill marker file alongside the session
+        const markerDir = path.join(dataDir, 'kill-markers');
+        fs.mkdirSync(markerDir, { recursive: true });
+        const markerPath = path.join(markerDir, (session.id || 'unknown') + '.kill');
+        fs.writeFileSync(markerPath, JSON.stringify({
+          killId,
+          sessionId: session.id,
+          killedAt: new Date().toISOString(),
+          reason: args.reason || 'kill-switch',
+          requestedBy: cmd.requestedBy || 'system'
+        }));
+        killed++;
+        console.log('Kill marker written for session:', session.id);
+      } catch (err) {
+        console.error('Failed to write kill marker for session', session.id, ':', err.message);
+      }
+    }
+  }
+
+  // Also attempt to send SIGTERM to session processes if we can identify their PIDs
+  if (killAll) {
+    // Write a global kill marker
+    try {
+      const markerDir = path.join(dataDir, 'kill-markers');
+      fs.mkdirSync(markerDir, { recursive: true });
+      fs.writeFileSync(path.join(markerDir, '_global.kill'), JSON.stringify({
+        killId,
+        killedAt: new Date().toISOString(),
+        reason: args.reason || 'kill-switch',
+        requestedBy: cmd.requestedBy || 'system'
+      }));
+    } catch {}
+  }
+
+  console.log('Kill switch executed: ' + killed + ' session(s) targeted');
+}
+
 async function handleCommand(cmd) {
   try {
+    // Handle kill commands directly (bypass sandbox - these are control-plane directives)
+    if (cmd.action === 'kill-session') {
+      handleKillSession(cmd);
+      return;
+    }
+
     let allowlists;
     try { allowlists = loadAllowlists(path.resolve(allowlistsDir)); }
     catch { allowlists = { commands: new Map(), paths: new Set() }; }

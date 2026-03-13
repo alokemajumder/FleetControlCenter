@@ -112,7 +112,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Clients
 
 - Web UI: single-page application with glassmorphic dark theme and keyboard shortcuts.
-- CLI: 18 commands for fleet management, policy simulation, and evidence export.
+- CLI: 20 commands for fleet management, policy simulation, drift detection, and evidence export.
 - Pocket PWA: mobile-optimized interface with push notifications and offline caching.
 - Termux: Android deployment script and documentation.
 
