@@ -8,6 +8,7 @@ let lastHash = '0'.repeat(64);
 let seq = 0;
 const ensuredDirs = new Set();
 let _sqliteStore = null;
+let _initializedAuditDir = null;
 
 function setSqliteStore(store) {
   _sqliteStore = store;
@@ -15,6 +16,7 @@ function setSqliteStore(store) {
 
 function init(dataDir) {
   const auditDir = path.join(dataDir, 'audit');
+  _initializedAuditDir = auditDir;
   fs.mkdirSync(auditDir, { recursive: true });
 
   const today = new Date().toISOString().slice(0, 10);
@@ -31,7 +33,7 @@ function init(dataDir) {
 }
 
 function log(entry) {
-  const auditDir = entry._auditDir || path.join(process.cwd(), 'data', 'audit');
+  const auditDir = _initializedAuditDir || entry._auditDir || path.join(process.cwd(), 'data', 'audit');
   if (!ensuredDirs.has(auditDir)) {
     fs.mkdirSync(auditDir, { recursive: true });
     ensuredDirs.add(auditDir);
@@ -60,9 +62,11 @@ function log(entry) {
   const date = record.ts.slice(0, 10);
   const filePath = path.join(auditDir, date + '.jsonl');
   delete record._auditDir;
-  fs.appendFile(filePath, JSON.stringify(record) + '\n', { flag: 'a' }, (err) => {
-    if (err) console.error('Audit write error:', err.message);
-  });
+  try {
+    fs.appendFileSync(filePath, JSON.stringify(record) + '\n', { flag: 'a' });
+  } catch (err) {
+    console.error('Audit write error:', err.message);
+  }
 
   // Mirror to SQLite if available
   if (_sqliteStore) {

@@ -10,8 +10,12 @@ const API = {
     };
     if (body) opts.body = JSON.stringify(body);
     const res = await fetch(this.baseUrl + path, opts);
+    if (!res.ok) {
+      let msg = 'Request failed';
+      try { const data = await res.json(); msg = data.error || data.message || msg; } catch {}
+      throw new Error(msg);
+    }
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Request failed');
     return data;
   },
 
@@ -66,7 +70,7 @@ const API = {
   runCron(jobId) { return this.post('/api/ops/cron/' + jobId + '/run'); },
   toggleCron(jobId) { return this.post('/api/ops/cron/' + jobId + '/toggle'); },
   getCronHistory() { return this.get('/api/ops/cron/history'); },
-  getLogs(source, lines) { return this.get('/api/ops/logs?source=' + source + '&lines=' + (lines || 100)); },
+  getLogs(source, lines) { return this.get('/api/ops/logs?source=' + encodeURIComponent(source) + '&lines=' + (lines || 100)); },
   getTailscale() { return this.get('/api/ops/tailscale'); },
 
   // Governance

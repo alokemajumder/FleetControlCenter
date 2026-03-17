@@ -87,6 +87,7 @@ function request(method, urlStr, body = null, token = null) {
         resolve({ status: res.statusCode, data, headers: res.headers });
       });
     });
+    req.setTimeout(30000, () => { req.destroy(new Error('Request timed out')); });
     req.on('error', reject);
     if (body) req.write(typeof body === 'string' ? body : JSON.stringify(body));
     req.end();
@@ -171,7 +172,12 @@ const CONFIG_DIR = path.join(os.homedir(), '.clawcc');
 function loadConfig() {
   const configPath = path.join(CONFIG_DIR, 'config.json');
   if (fs.existsSync(configPath)) {
-    return JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    try {
+      return JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    } catch (e) {
+      err(`Malformed config at ${configPath}: ${e.message}`);
+      return {};
+    }
   }
   return {};
 }
@@ -426,6 +432,10 @@ async function cmdVerify(filePath) {
   if (!filePath) { err('Usage: clawcc verify <path>'); process.exit(1); }
   try {
     const bundle = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    if (!bundle.receipts || !Array.isArray(bundle.receipts)) {
+      err('Invalid bundle: missing or malformed "receipts" array');
+      process.exit(1);
+    }
     const { hashData } = require('../control-plane/lib/crypto');
     // Verify hash chain
     let valid = true;
@@ -466,7 +476,8 @@ async function cmdExport(host, token, sessionId) {
   if (!sessionId) { err('Usage: clawcc export <session-id>'); process.exit(1); }
   try {
     const res = await request('POST', `${host}/api/governance/evidence/export`, { sessionId }, token);
-    const outPath = `evidence-${sessionId}.json`;
+    const safeId = sessionId.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const outPath = `evidence-${safeId}.json`;
     fs.writeFileSync(outPath, JSON.stringify(res.data, null, 2));
     out(c('green', `Evidence bundle saved to ${outPath}`));
   } catch (e) { err(e.message); }

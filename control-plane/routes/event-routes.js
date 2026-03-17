@@ -123,6 +123,7 @@ function registerEventRoutes(router, config, modules) {
     if (!authResult.authenticated) return res.error(401, 'Not authenticated');
     let body;
     try { body = await parseBody(req); } catch (err) { return res.error(400, err.message); }
+    if (!body.otherSessionId) return res.error(400, 'otherSessionId is required');
     const eventsA = events.query(config.dataDir, { sessionId: req.params.sessionId, limit: 1000 });
     const eventsB = events.query(config.dataDir, { sessionId: body.otherSessionId, limit: 1000 });
     const sessData = snapshots.load(config.dataDir, 'sessions');
@@ -241,7 +242,7 @@ function registerEventRoutes(router, config, modules) {
     if (!sessEvents.length) return res.json(200, { success: true, replay: [], totalSteps: 0, durationMs: 0 });
 
     // Query returns newest-first, reverse for chronological order
-    const sorted = sessEvents.reverse();
+    const sorted = [...sessEvents].reverse();
     const baseTs = new Date(sorted[0].ts || sorted[0].timestamp).getTime();
 
     const replay = sorted.map((e, i) => ({

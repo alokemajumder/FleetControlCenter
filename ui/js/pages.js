@@ -8,7 +8,8 @@
 // Helpers
 function truncId(id) {
   if (!id) return '--';
-  return id.length > 12 ? id.slice(0, 10) + '...' : id;
+  const truncated = id.length > 12 ? id.slice(0, 10) + '...' : id;
+  return escapeHtml(truncated);
 }
 
 function timeAgo(ts) {
@@ -251,6 +252,7 @@ async function loadTopology() {
 
 async function openNodeDetail(nodeId) {
   const panel = document.getElementById('fleet-detail');
+  if (!panel) return;
   panel.classList.add('open');
   panel.innerHTML = `<div class="panel-header"><h2>Node Details</h2><button class="btn-icon panel-close" title="Close">&#x2715;</button></div><p class="text-muted">Loading...</p>`;
   try {
@@ -463,6 +465,7 @@ function filterSessions() {
 
 async function openSessionDetail(sessionId) {
   const panel = document.getElementById('session-detail');
+  if (!panel) return;
   panel.classList.add('open');
   panel.innerHTML = `<div class="panel-header"><h2>Session</h2><button class="btn-icon panel-close" title="Close">&#x2715;</button></div><p class="text-muted">Loading...</p>`;
   try {
@@ -1312,7 +1315,7 @@ async function loadCronData() {
     const histEl = document.getElementById('cron-history');
     if (histEl && histResp.status === 'fulfilled') {
       const history = histResp.value.history || [];
-      histEl.innerHTML = history.length ? history.reverse().map(h =>
+      histEl.innerHTML = history.length ? [...history].reverse().map(h =>
         '<div class="cron-history-item"><span class="badge badge-online">' + escapeHtml(h.status || 'completed') + '</span><span class="text-sm font-semibold">' + escapeHtml(h.jobId || '--') + '</span><span class="text-muted text-sm">' + escapeHtml(h.triggeredBy || '') + '</span><span class="text-muted text-xs">' + timeAgo(h.triggeredAt) + '</span></div>'
       ).join('') : '<div class="text-muted text-sm">No run history</div>';
     }
@@ -1545,10 +1548,17 @@ async function renderGovTab(tab) {
             <div class="glass-card p-4">
               <div class="section-title">Verify Evidence Bundle</div>
               <div class="form-group"><label>Upload Bundle (JSON)</label><textarea id="evidence-verify-input" placeholder="Paste evidence bundle JSON..."></textarea></div>
-              <button class="btn btn-ghost btn-sm" onclick="(async()=>{try{const b=JSON.parse(document.getElementById('evidence-verify-input').value);const r=await API.verifyEvidence(b);App.showToast(r.valid?'Evidence verified':'Verification failed',r.valid?'success':'error');}catch(e){App.showToast(e.message,'error');}})()">Verify</button>
+              <button class="btn btn-ghost btn-sm" id="evidence-verify-btn">Verify</button>
             </div>
           </div>
         `;
+        document.getElementById('evidence-verify-btn')?.addEventListener('click', async () => {
+          try {
+            const b = JSON.parse(document.getElementById('evidence-verify-input').value);
+            const r = await API.verifyEvidence(b);
+            App.showToast(r.valid ? 'Evidence verified' : 'Verification failed', r.valid ? 'success' : 'error');
+          } catch (e) { App.showToast(e.message, 'error'); }
+        });
         break;
       }
       case 'skills': {
@@ -1750,6 +1760,7 @@ function renderAgentsTable() {
 
 async function openAgentDetail(agentId) {
   const panel = document.getElementById('agent-detail');
+  if (!panel) return;
   panel.classList.add('open');
   panel.innerHTML = '<div class="panel-header"><h2>Agent Details</h2><button class="btn-icon panel-close" title="Close">&#x2715;</button></div><p class="text-muted">Loading...</p>';
   try {
@@ -3237,11 +3248,11 @@ async function renderSkillsPage() {
 
   document.getElementById('skills-search')?.addEventListener('input', async (e) => {
     const q = e.target.value.trim();
-    if (!q) { renderSkillsGrid(); return; }
+    if (!q) { loadSkillsData(); return; }
     try {
       const resp = await API.searchSkillsHub(q);
-      _skillsCache = resp.skills || resp || [];
-      renderSkillsGrid();
+      const searchResults = resp.skills || resp || [];
+      renderSkillsGrid(searchResults);
     } catch { /* ignore search errors */ }
   });
 }
@@ -3276,10 +3287,11 @@ async function loadSkillsData() {
   }
 }
 
-function renderSkillsGrid() {
+function renderSkillsGrid(overrideData) {
+  const source = overrideData || _skillsCache;
   const filtered = _skillsCategoryFilter
-    ? _skillsCache.filter(s => (s.category || '').toLowerCase() === _skillsCategoryFilter)
-    : _skillsCache;
+    ? source.filter(s => (s.category || '').toLowerCase() === _skillsCategoryFilter)
+    : source;
   const grid = document.getElementById('skills-grid');
   if (!filtered.length) {
     grid.innerHTML = '<div class="text-muted p-4">No skills found</div>';

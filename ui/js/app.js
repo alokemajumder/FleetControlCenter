@@ -39,6 +39,14 @@ const App = {
     this.bindKeyboard();
     this.bindTopbar();
 
+    // Single backdrop click listener (prevents accumulation in showModal)
+    const backdrop = document.getElementById('modal-backdrop');
+    if (backdrop) {
+      backdrop.addEventListener('click', (e) => {
+        if (e.target === backdrop && backdrop.classList.contains('open')) this.hideModal();
+      });
+    }
+
     try {
       this.currentUser = await API.me();
       this.showDashboard();
@@ -141,6 +149,9 @@ const App = {
 
   navigateTo(page) {
     if (!this.pages[page]) return;
+
+    // Clear replay interval when leaving sessions page
+    if (typeof pauseReplay === 'function') pauseReplay();
 
     // Disconnect SSE when leaving live feed or channels
     if (this.currentPage === 'livefeed' && page !== 'livefeed') {
@@ -358,9 +369,6 @@ const App = {
     });
     backdrop.querySelectorAll('[data-modal-close]').forEach(btn => {
       btn.addEventListener('click', () => this.hideModal());
-    });
-    backdrop.addEventListener('click', (e) => {
-      if (e.target === backdrop) this.hideModal();
     });
   },
 

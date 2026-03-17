@@ -82,7 +82,11 @@ function registerKillSwitchRoutes(router, config, modules) {
     if ((authResult.user.role || '').toLowerCase() !== 'admin') return res.error(403, 'Admin required');
     const stepUp = requireStepUp(req, auth, config);
     if (!stepUp.authorized) return res.error(403, stepUp.reason);
-    await performKill('session', req.params.sessionId, authResult.user, res);
+    try {
+      await performKill('session', req.params.sessionId, authResult.user, res);
+    } catch (err) {
+      res.error(500, 'Kill operation failed: ' + err.message);
+    }
   });
 
   router.post('/api/kill/node/:nodeId', async (req, res) => {
@@ -91,7 +95,11 @@ function registerKillSwitchRoutes(router, config, modules) {
     if ((authResult.user.role || '').toLowerCase() !== 'admin') return res.error(403, 'Admin required');
     const stepUp = requireStepUp(req, auth, config);
     if (!stepUp.authorized) return res.error(403, stepUp.reason);
-    await performKill('node', req.params.nodeId, authResult.user, res);
+    try {
+      await performKill('node', req.params.nodeId, authResult.user, res);
+    } catch (err) {
+      res.error(500, 'Kill operation failed: ' + err.message);
+    }
   });
 
   router.post('/api/kill/global', async (req, res) => {
@@ -100,7 +108,11 @@ function registerKillSwitchRoutes(router, config, modules) {
     if ((authResult.user.role || '').toLowerCase() !== 'admin') return res.error(403, 'Admin required');
     const stepUp = requireStepUp(req, auth, config);
     if (!stepUp.authorized) return res.error(403, stepUp.reason);
-    await performKill('global', 'all', authResult.user, res);
+    try {
+      await performKill('global', 'all', authResult.user, res);
+    } catch (err) {
+      res.error(500, 'Kill operation failed: ' + err.message);
+    }
   });
 }
 

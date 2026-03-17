@@ -110,6 +110,7 @@ function registerFleetRoutes(router, config, modules) {
     if (!auth.checkPermission(authResult.user, 'action:safe')) return res.error(403, 'Insufficient permissions');
     let body;
     try { body = await parseBody(req); } catch (err) { return res.error(400, err.message); }
+    if (!body.action || typeof body.action !== 'string') return res.error(400, 'action is required');
     const commandId = require('crypto').randomUUID();
     const command = { id: commandId, action: body.action, args: body.args, requestedBy: authResult.user.username, ts: new Date().toISOString() };
     const result = queueCommand(req.params.nodeId, command);

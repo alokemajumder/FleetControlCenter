@@ -398,7 +398,7 @@ function createWebhookManager(opts = {}) {
         const delivery = _createDelivery(webhook.id, eventType, payload);
         matched.push(delivery);
         // Fire and forget delivery with retry
-        _deliverWithRetry(delivery, webhook);
+        _deliverWithRetry(delivery, webhook).catch(err => console.error('Webhook delivery error:', err.message));
       }
     }
     return matched;

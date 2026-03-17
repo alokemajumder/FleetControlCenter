@@ -25,12 +25,12 @@ for (const cp of configPaths) {
 }
 
 config.host = config.host || '0.0.0.0';
-config.port = config.port || 3400;
+config.port = Number(config.port) || 3400;
 config.dataDir = path.resolve(config.dataDir || './data');
 config.httpsEnabled = config.httpsEnabled || false;
 
 // Validate critical config
-if (config.port && (typeof config.port !== 'number' || config.port < 1 || config.port > 65535)) {
+if (config.port < 1 || config.port > 65535 || !Number.isFinite(config.port)) {
   console.error('FATAL: Invalid port:', config.port);
   process.exit(1);
 }
@@ -121,7 +121,7 @@ const auth = {
   createSession(user, opts = {}) {
     const username = user.username || user.user?.username || 'admin';
     const token = authManager.createSession(username, { mfaPending: !!opts.mfaPending });
-    return { token, expiresAt: Date.now() + (opts.mfaPending ? 300000 : 86400000) };
+    return { token, expiresAt: Date.now() + (opts.mfaPending ? 300000 : (config.auth?.sessionTtlMs || 86400000)) };
   },
   upgradeSession(token) {
     return authManager.upgradeSession(token);
@@ -253,6 +253,7 @@ const events = {
     catch (err) {
       // Log validation errors instead of silently swallowing
       if (err.message) console.warn('Event ingest error:', err.message);
+      return null;
     }
   },
   subscribe(filter, callback) {
@@ -469,7 +470,9 @@ events.subscribe({ type: 'skill.deployed' }, (event) => {
       }
     }
     if (canaryDeployments.size < CANARY_MAX) {
-      canaryDeployments.set(event.payload.skillId, { deployedAt: Date.now(), errorCount: 0 });
+      canaryDeployments.set(event.payload.skillId, { deployedAt: Date.now(), errorCount: 0, sessionId: event.sessionId || null });
+    } else {
+      console.warn('Canary deployment limit reached; deployment not tracked:', event.payload.skillId);
     }
   }
 });
@@ -477,6 +480,8 @@ events.subscribe({}, (event) => {
   if (event.type === 'session.error' || event.type === 'tool.error') {
     for (const [skillId, info] of canaryDeployments) {
       if (Date.now() - info.deployedAt < 600000) { // 10 min window
+        // Only count errors for events matching this canary's session
+        if (info.sessionId && event.sessionId && info.sessionId !== event.sessionId) continue;
         info.errorCount++;
         if (info.errorCount >= 5) {
           events.ingest({ ts: new Date().toISOString(), nodeId: null, sessionId: null, type: 'skill.rolledback', severity: 'warning', payload: { skillId, reason: 'auto-rollback', errorCount: info.errorCount } });
@@ -701,11 +706,13 @@ function serveStatic(req, res) {
   }
 
   // Prevent path traversal (resolve symlinks to prevent bypass via /tmp -> /private/tmp etc)
-  const uiDir = fs.realpathSync(path.resolve(__dirname, '..', 'ui'));
-  const pocketDir = fs.realpathSync(path.resolve(__dirname, '..', 'pocket'));
+  let uiDir;
+  try { uiDir = fs.realpathSync(path.resolve(__dirname, '..', 'ui')); } catch { uiDir = path.resolve(__dirname, '..', 'ui'); }
+  let pocketDir;
+  try { pocketDir = fs.realpathSync(path.resolve(__dirname, '..', 'pocket')); } catch { pocketDir = null; }
   let resolved;
   try { resolved = fs.realpathSync(path.resolve(filePath)); } catch { resolved = path.resolve(filePath); }
-  if (!resolved.startsWith(uiDir) && !resolved.startsWith(pocketDir)) {
+  if (!resolved.startsWith(uiDir) && !(pocketDir && resolved.startsWith(pocketDir))) {
     res.writeHead(403);
     res.end('Forbidden');
     return;
@@ -753,6 +760,7 @@ const REQUEST_TIMEOUT_MS = (config.security && config.security.requestTimeoutMs)
 
 // Request handler
 async function handleRequest(req, res) {
+  try {
   // Request timeout - prevents hanging connections
   const timeout = setTimeout(() => {
     if (!res.headersSent) {
@@ -810,6 +818,13 @@ async function handleRequest(req, res) {
 
   // Static files
   serveStatic(req, res);
+  } catch (err) {
+    console.error('Unhandled request error:', err);
+    if (!res.headersSent) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Internal server error' }));
+    }
+  }
 }
 
 // Build indexes and snapshots on startup
@@ -884,11 +899,13 @@ const snapshotIntervalMs = (config.events && config.events.snapshotIntervalMs) |
 const snapshotRebuildInterval = setInterval(() => {
   try { snapshotsMod.rebuild(config.dataDir); } catch { /* ignore */ }
 }, snapshotIntervalMs);
+snapshotRebuildInterval.unref();
 
 // Periodic agent stale check (every 60s)
 const agentStaleInterval = setInterval(() => {
   try { agentTracker.markStale(); } catch { /* ignore */ }
 }, 60000);
+agentStaleInterval.unref();
 
 // Graceful shutdown
 let shuttingDown = false;
@@ -941,15 +958,13 @@ function shutdown(signal) {
 
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGHUP', () => shutdown('SIGHUP'));
 
 // Uncaught exception / rejection handlers - log and keep running for non-fatal errors
 process.on('uncaughtException', (err) => {
   console.error('Uncaught exception:', err);
   auditMod.log({ actor: 'system', action: 'process.uncaughtException', target: 'control-plane', detail: String(err.message || err) });
-  // Fatal errors: exit after flushing
-  if (err.code === 'ERR_OUT_OF_RANGE' || err.code === 'ERR_BUFFER_OUT_OF_BOUNDS') {
-    shutdown('uncaughtException');
-  }
+  shutdown('uncaughtException');
 });
 
 process.on('unhandledRejection', (reason) => {

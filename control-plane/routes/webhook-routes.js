@@ -42,7 +42,8 @@ function registerWebhookRoutes(router, config, modules) {
     if ((authResult.user.role || '').toLowerCase() !== 'admin') return res.error(403, 'Admin required');
     const webhook = webhookManager.getWebhook(req.params.id);
     if (!webhook) return res.error(404, 'Webhook not found');
-    res.json(200, { success: true, webhook });
+    const safe = { ...webhook, secret: webhook.secret ? webhook.secret.slice(0, 6) + '...' : null };
+    res.json(200, { success: true, webhook: safe });
   });
 
   // Update webhook

@@ -153,10 +153,21 @@ function createGateway(opts = {}) {
       return;
     }
 
-    const targetUrl = u.url + reqPath;
+    // Validate reqPath to prevent SSRF via path traversal or protocol injection
+    if (typeof reqPath !== 'string' || !reqPath.startsWith('/') || reqPath.includes('..') || reqPath.includes('@') || /^\/\//.test(reqPath) || /[a-zA-Z][a-zA-Z0-9+.-]*:/.test(reqPath)) {
+      callback({ error: 'Invalid request path' });
+      return;
+    }
     let parsed;
     try {
-      parsed = new URL(targetUrl);
+      // Use URL constructor to safely resolve path against upstream base URL
+      parsed = new URL(reqPath, u.url);
+      // Verify hostname matches the upstream to prevent open redirect / SSRF
+      const upstreamParsed = new URL(u.url);
+      if (parsed.hostname !== upstreamParsed.hostname) {
+        callback({ error: 'Request path must not redirect to a different host' });
+        return;
+      }
     } catch {
       callback({ error: 'Invalid upstream URL' });
       return;

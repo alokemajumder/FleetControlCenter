@@ -47,8 +47,12 @@ function registerGovernanceRoutes(router, config, modules) {
     try { body = await parseBody(req); } catch (err) { return res.error(400, err.message); }
     const tmpPolicyPath = path.join(policiesDir, policyId + '.policy.json.tmp');
     const finalPolicyPath = path.join(policiesDir, policyId + '.policy.json');
-    fs.writeFileSync(tmpPolicyPath, JSON.stringify(body, null, 2));
-    fs.renameSync(tmpPolicyPath, finalPolicyPath);
+    try {
+      fs.writeFileSync(tmpPolicyPath, JSON.stringify(body, null, 2));
+      fs.renameSync(tmpPolicyPath, finalPolicyPath);
+    } catch (err) {
+      return res.error(500, 'Failed to write policy: ' + err.message);
+    }
     if (index) index.invalidatePolicyCache();
     audit.log({ actor: authResult.user.username, action: 'policy.updated', target: req.params.id, detail: JSON.stringify(body) });
     res.json(200, { success: true });
@@ -179,8 +183,12 @@ function registerGovernanceRoutes(router, config, modules) {
     try { body = await parseBody(req); } catch (err) { return res.error(400, err.message); }
     const twPath = path.join(config.dataDir, '..', 'tripwires', 'default.tripwires.json');
     const twTmpPath = twPath + '.tmp';
-    fs.writeFileSync(twTmpPath, JSON.stringify(body, null, 2));
-    fs.renameSync(twTmpPath, twPath);
+    try {
+      fs.writeFileSync(twTmpPath, JSON.stringify(body, null, 2));
+      fs.renameSync(twTmpPath, twPath);
+    } catch (err) {
+      return res.error(500, 'Failed to write tripwires: ' + err.message);
+    }
     audit.log({ actor: authResult.user.username, action: 'tripwires.updated', target: 'default' });
     res.json(200, { success: true });
   });

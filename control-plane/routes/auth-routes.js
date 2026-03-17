@@ -131,6 +131,7 @@ function registerAuthRoutes(router, config, modules) {
     if (!body.code) return res.error(400, 'MFA code required');
     const valid = auth.verifyMfaLogin(config.dataDir, authResult.user.username, body.code);
     if (!valid || !valid.success) return res.error(401, 'Invalid MFA code');
+    if (!req.cookies || !req.cookies.clawcc_session) return res.error(401, 'Not authenticated');
     auth.recordStepUp(req.cookies.clawcc_session);
     audit.log({ actor: authResult.user.username, action: 'auth.stepup', target: authResult.user.username });
     res.json(200, { success: true });

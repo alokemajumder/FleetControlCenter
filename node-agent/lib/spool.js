@@ -9,9 +9,16 @@ function init(spoolDir, options = {}) {
   fs.mkdirSync(spoolDir, { recursive: true });
   const maxSpoolBytes = options.maxSpoolBytes || 100 * 1024 * 1024; // 100MB default
   let draining = false;
+  let drainBuffer = []; // Buffer events received during drain
 
   return {
     spool(event) {
+      // If draining, buffer in memory to avoid writing to files being drained
+      if (draining) {
+        drainBuffer.push(event);
+        return;
+      }
+
       // Enforce spool size limit to prevent disk exhaustion
       try {
         const files = fs.readdirSync(spoolDir).filter(f => f.endsWith('.jsonl'));
@@ -36,17 +43,38 @@ function init(spoolDir, options = {}) {
     async drain(controlPlaneUrl, nodeSecret) {
       if (draining) return { sent: 0, failed: 0, remaining: 0, skipped: true };
       draining = true;
-      try { return await this._doDrain(controlPlaneUrl, nodeSecret); }
-      finally { draining = false; }
+      drainBuffer = [];
+      try {
+        const result = await this._doDrain(controlPlaneUrl, nodeSecret);
+        return result;
+      } finally {
+        draining = false;
+        // Flush any events that were buffered during the drain
+        const buffered = drainBuffer;
+        drainBuffer = [];
+        for (const event of buffered) {
+          this.spool(event);
+        }
+      }
     },
 
     async _doDrain(controlPlaneUrl, nodeSecret) {
+      // Rename files to .draining to isolate them from new spool writes
       const files = fs.readdirSync(spoolDir).filter(f => f.endsWith('.jsonl')).sort();
+      const drainingFiles = [];
+      for (const file of files) {
+        const src = path.join(spoolDir, file);
+        const dst = src + '.draining';
+        try {
+          fs.renameSync(src, dst);
+          drainingFiles.push({ original: src, draining: dst });
+        } catch { /* file may have been removed */ }
+      }
+
       let sent = 0, failed = 0;
 
-      for (const file of files) {
-        const filePath = path.join(spoolDir, file);
-        const content = fs.readFileSync(filePath, 'utf8');
+      for (const { original, draining: drainingPath } of drainingFiles) {
+        const content = fs.readFileSync(drainingPath, 'utf8');
         const lines = content.trim().split('\n').filter(Boolean);
         const remaining = [];
 
@@ -65,12 +93,13 @@ function init(spoolDir, options = {}) {
         }
 
         if (remaining.length === 0) {
-          fs.unlinkSync(filePath);
+          fs.unlinkSync(drainingPath);
         } else {
-          // Atomic write: write to temp file then rename to prevent data loss on crash
-          const tmpPath = filePath + '.tmp';
+          // Write remaining back to the original filename
+          const tmpPath = original + '.tmp';
           fs.writeFileSync(tmpPath, remaining.join('\n') + '\n');
-          fs.renameSync(tmpPath, filePath);
+          fs.renameSync(tmpPath, original);
+          try { fs.unlinkSync(drainingPath); } catch { /* already handled */ }
         }
       }
 

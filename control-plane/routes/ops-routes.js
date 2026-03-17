@@ -254,6 +254,7 @@ function registerOpsRoutes(router, config, modules) {
     const authResult = authenticate(req, auth);
     if (!authResult.authenticated) return res.error(401, 'Not authenticated');
 
+    if (!index) return res.error(503, 'Index not available');
     const alertConfig = config.alerts || {};
     const result = index.getUsageAlerts({
       costPerHour: alertConfig.costPerHour || 5.0,
@@ -274,6 +275,7 @@ function registerOpsRoutes(router, config, modules) {
     const windowLabel = windowMap[windowParam] ? windowParam : '24h';
     const cutoff = new Date(Date.now() - windowMs).toISOString();
 
+    if (!index) return res.error(503, 'Index not available');
     const result = index.getRollingUsage(windowMs);
     res.json(200, {
       success: true,

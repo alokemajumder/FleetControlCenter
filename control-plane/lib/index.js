@@ -408,7 +408,10 @@ function createIndex(opts) {
   function saveFleetNodes(dataDir, nodes) {
     const dir = path.join(dataDir, 'fleet');
     fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(path.join(dir, 'nodes.json'), JSON.stringify(nodes, null, 2));
+    const finalPath = path.join(dir, 'nodes.json');
+    const tmpPath = finalPath + '.tmp';
+    fs.writeFileSync(tmpPath, JSON.stringify(nodes, null, 2));
+    fs.renameSync(tmpPath, finalPath);
     fleetCache = { nodes, lastLoaded: Date.now() };
   }
 
@@ -462,7 +465,10 @@ function createIndex(opts) {
       const cached = snapshotCache.get(name);
       if (cached) {
         try {
-          fs.writeFileSync(path.join(snapshotsDir, name + '.json'), JSON.stringify(cached.data, null, 2));
+          const finalPath = path.join(snapshotsDir, name + '.json');
+          const tmpPath = finalPath + '.tmp';
+          fs.writeFileSync(tmpPath, JSON.stringify(cached.data, null, 2));
+          fs.renameSync(tmpPath, finalPath);
         } catch { /* ignore */ }
       }
     }

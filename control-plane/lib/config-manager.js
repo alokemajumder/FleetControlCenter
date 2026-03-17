@@ -147,6 +147,7 @@ function createConfigManager(opts = {}) {
 
     // Merge top-level fields (skip redacted secrets)
     for (const [key, value] of Object.entries(configData)) {
+      if (key === '__proto__' || key === 'constructor' || key === 'prototype') continue;
       if (value === '***') {
         warnings.push('Skipped redacted field: ' + key);
         continue;
@@ -157,6 +158,7 @@ function createConfigManager(opts = {}) {
           currentConfig[key] = {};
         }
         for (const [subKey, subValue] of Object.entries(value)) {
+          if (subKey === '__proto__' || subKey === 'constructor' || subKey === 'prototype') continue;
           if (subValue === '***') {
             warnings.push('Skipped redacted field: ' + key + '.' + subKey);
             continue;

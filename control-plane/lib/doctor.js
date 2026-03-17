@@ -87,11 +87,23 @@ function createDoctor(opts = {}) {
       if (!authManager) {
         return { id: 'admin-password-changed', name: 'Admin password changed from default', status: 'skip', message: 'Auth manager not available', fixable: false };
       }
-      // Try to authenticate with the default password
+      // Check if admin password hash matches 'changeme' without going through
+      // authenticate(), which would increment failedAttempts and cause lockout.
+      const adminUser = authManager.getUser('admin');
+      if (!adminUser) {
+        return { id: 'admin-password-changed', name: 'Admin password changed from default', status: 'skip', message: 'Admin user not found', fixable: false };
+      }
       try {
-        authManager.authenticate('admin', 'changeme');
-        // If this succeeds, password is still default
-        return { id: 'admin-password-changed', name: 'Admin password changed from default', status: 'warn', message: 'Admin password is still the default "changeme"', fixable: true, fixId: 'admin-password-changed' };
+        const { verifyPassword } = require('./crypto');
+        // getUser returns a safe projection; we need the raw stored hash.
+        // Use checkPasswordDirect if available, otherwise try verifyPassword on stored hash.
+        const isDefault = authManager.checkPasswordDirect
+          ? authManager.checkPasswordDirect('admin', 'changeme')
+          : false;
+        if (isDefault) {
+          return { id: 'admin-password-changed', name: 'Admin password changed from default', status: 'warn', message: 'Admin password is still the default "changeme"', fixable: true, fixId: 'admin-password-changed' };
+        }
+        return { id: 'admin-password-changed', name: 'Admin password changed from default', status: 'pass', message: 'Admin password has been changed from default', fixable: false };
       } catch {
         return { id: 'admin-password-changed', name: 'Admin password changed from default', status: 'pass', message: 'Admin password has been changed from default', fixable: false };
       }

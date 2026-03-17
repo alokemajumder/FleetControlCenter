@@ -167,9 +167,11 @@ function createOnboarding(opts = {}) {
       throw new Error(validationError);
     }
 
-    // Store config data
+    // Store config data (strip sensitive fields before persisting)
     if (data && stepId !== 'welcome' && stepId !== 'complete' && stepId !== 'security-scan') {
       Object.assign(state.config, data);
+      // Remove plaintext password from persisted config to avoid storing secrets on disk
+      delete state.config.password;
     }
 
     step.status = 'completed';

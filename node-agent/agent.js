@@ -37,6 +37,9 @@ if (!config.nodeId) {
 
 const controlPlaneUrl = config.controlPlaneUrl || 'http://localhost:3400';
 const nodeSecret = config.nodeSecret || 'default-secret';
+if (nodeSecret === 'default-secret') {
+  console.warn('[SECURITY] Using default node secret. Set nodeSecret in config for production use.');
+}
 const heartbeatIntervalMs = config.heartbeatIntervalMs || 15000;
 const telemetryIntervalMs = config.telemetryIntervalMs || 5000;
 const discoveryPaths = config.discoveryPaths || [
@@ -62,6 +65,7 @@ const spooler = initSpool(spoolDir);
 const healthCollector = startHealthCollection(telemetryIntervalMs);
 
 let controlPlaneReachable = false;
+let isHeartbeatInFlight = false;
 let backoffMs = 0;
 const maxBackoffMs = 300000; // 5 minutes max backoff
 
@@ -101,6 +105,7 @@ function signedRequest(method, urlPath, body) {
     if (data) options.headers['Content-Length'] = Buffer.byteLength(data);
 
     const client = url.protocol === 'https:' ? https : http;
+    let settled = false;
     const req = client.request(options, (res) => {
       let responseBody = '';
       let responseSize = 0;
@@ -108,12 +113,14 @@ function signedRequest(method, urlPath, body) {
         responseSize += c.length;
         if (responseSize > maxResponseSize) {
           req.destroy();
-          reject(new Error('Response too large'));
+          if (!settled) { settled = true; reject(new Error('Response too large')); }
           return;
         }
         responseBody += c;
       });
       res.on('end', () => {
+        if (settled) return;
+        settled = true;
         try { resolve(JSON.parse(responseBody)); }
         catch { resolve({ success: false, raw: responseBody.slice(0, 500) }); }
       });
@@ -147,55 +154,63 @@ async function register() {
 }
 
 async function heartbeat() {
-  // Exponential backoff when control plane is unreachable
-  if (backoffMs > 0 && !controlPlaneReachable) {
-    return; // Skip this heartbeat, backoff timer handles retry
-  }
-
-  const health = collectHealth();
-  const sessions = discoverSessions(discoveryPaths);
+  // Prevent concurrent heartbeat calls
+  if (isHeartbeatInFlight) return;
+  isHeartbeatInFlight = true;
 
   try {
-    const result = await signedRequest('POST', '/api/fleet/heartbeat', {
-      nodeId: config.nodeId,
-      health,
-      sessions: sessions.slice(0, 100).map(s => ({ id: s.id, project: s.project, lastModified: s.lastModified })),
-      timestamp: new Date().toISOString()
-    });
-    controlPlaneReachable = true;
-    resetBackoff();
-
-    // If server says we're not registered, re-register
-    if (result.registered === false) {
-      console.log('Node not registered on server, re-registering...');
-      await register();
-      return;
+    // Exponential backoff when control plane is unreachable
+    if (backoffMs > 0 && !controlPlaneReachable) {
+      return; // Skip this heartbeat, backoff timer handles retry
     }
 
-    // Process commands from control plane
-    if (result.commands && Array.isArray(result.commands) && result.commands.length > 0) {
-      for (const cmd of result.commands) {
-        if (!cmd || !cmd.action) {
-          console.warn('Skipping malformed command:', JSON.stringify(cmd));
-          continue;
-        }
-        console.log('Received command:', cmd.action);
-        await handleCommand(cmd);
+    const health = collectHealth();
+    const sessions = discoverSessions(discoveryPaths);
+
+    try {
+      const result = await signedRequest('POST', '/api/fleet/heartbeat', {
+        nodeId: config.nodeId,
+        health,
+        sessions: sessions.slice(0, 100).map(s => ({ id: s.id, project: s.project, lastModified: s.lastModified })),
+        timestamp: new Date().toISOString()
+      });
+      controlPlaneReachable = true;
+      resetBackoff();
+
+      // If server says we're not registered, re-register
+      if (result.registered === false) {
+        console.log('Node not registered on server, re-registering...');
+        await register();
+        return;
       }
+
+      // Process commands from control plane
+      if (result.commands && Array.isArray(result.commands) && result.commands.length > 0) {
+        for (const cmd of result.commands) {
+          if (!cmd || !cmd.action) {
+            console.warn('Skipping malformed command:', JSON.stringify(cmd));
+            continue;
+          }
+          console.log('Received command:', cmd.action);
+          await handleCommand(cmd);
+        }
+      }
+    } catch (err) {
+      controlPlaneReachable = false;
+      increaseBackoff();
+      console.error('Heartbeat failed (backoff:', backoffMs + 'ms):', err.message);
+      // Spool health event
+      spooler.spool({
+        ts: new Date().toISOString(),
+        nodeId: config.nodeId,
+        sessionId: null,
+        type: 'node.heartbeat',
+        severity: 'info',
+        payload: { health, offline: true }
+      });
     }
-  } catch (err) {
-    controlPlaneReachable = false;
-    increaseBackoff();
-    console.error('Heartbeat failed (backoff:', backoffMs + 'ms):', err.message);
-    // Spool health event
-    spooler.spool({
-      ts: new Date().toISOString(),
-      nodeId: config.nodeId,
-      sessionId: null,
-      type: 'node.heartbeat',
-      severity: 'info',
-      payload: { health, offline: true }
-    });
+  } finally {
+    isHeartbeatInFlight = false;
   }
 }
 
@@ -218,7 +233,8 @@ function handleKillSession(cmd) {
         // Write kill marker file alongside the session
         const markerDir = path.join(dataDir, 'kill-markers');
         fs.mkdirSync(markerDir, { recursive: true });
-        const markerPath = path.join(markerDir, (session.id || 'unknown') + '.kill');
+        const safeId = (session.id || 'unknown').replace(/[^a-zA-Z0-9_-]/g, '_');
+        const markerPath = path.join(markerDir, safeId + '.kill');
         fs.writeFileSync(markerPath, JSON.stringify({
           killId,
           sessionId: session.id,

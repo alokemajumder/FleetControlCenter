@@ -236,7 +236,7 @@ function createSqliteStore(opts = {}) {
     days = days || 30;
     const now = new Date();
     const cutoffDate = new Date(now);
-    cutoffDate.setDate(cutoffDate.getDate() - days);
+    cutoffDate.setDate(cutoffDate.getDate() - (days - 1));
     const cutoff = cutoffDate.toISOString().slice(0, 10);
 
     try {

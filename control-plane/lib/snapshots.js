@@ -63,10 +63,14 @@ function rebuild(dataDir) {
     topology.edges.push(edge);
   }
 
-  fs.writeFileSync(path.join(snapshotsDir, 'sessions.json'), JSON.stringify({ sessions }, null, 2));
-  fs.writeFileSync(path.join(snapshotsDir, 'usage.json'), JSON.stringify(usage, null, 2));
-  fs.writeFileSync(path.join(snapshotsDir, 'health.json'), JSON.stringify(health, null, 2));
-  fs.writeFileSync(path.join(snapshotsDir, 'topology.json'), JSON.stringify(topology, null, 2));
+  const snapNames = ['sessions', 'usage', 'health', 'topology'];
+  const snapData = [{ sessions }, usage, health, topology];
+  for (let i = 0; i < snapNames.length; i++) {
+    const finalPath = path.join(snapshotsDir, snapNames[i] + '.json');
+    const tmpPath = finalPath + '.tmp';
+    fs.writeFileSync(tmpPath, JSON.stringify(snapData[i], null, 2));
+    fs.renameSync(tmpPath, finalPath);
+  }
 }
 
 function processEvent(event, sessions, usage, health, nodeSet, toolSet, edgeMap) {
@@ -211,7 +215,10 @@ function update(dataDir, event) {
   const toWrite = eventTypeToSnap[event.type] || [];
   for (const name of toWrite) {
     try {
-      fs.writeFileSync(path.join(snapshotsDir, name + '.json'), JSON.stringify(data[name], null, 2));
+      const finalPath = path.join(snapshotsDir, name + '.json');
+      const tmpPath = finalPath + '.tmp';
+      fs.writeFileSync(tmpPath, JSON.stringify(data[name], null, 2));
+      fs.renameSync(tmpPath, finalPath);
     } catch { /* ignore write errors */ }
   }
 }

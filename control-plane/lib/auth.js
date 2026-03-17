@@ -43,8 +43,10 @@ function createAuthManager(opts = {}) {
         loginCount: u.loginCount || 0,
         lastLogin: u.lastLogin || null
       }));
-      // Non-blocking write to avoid blocking event loop on hot paths
-      fs.writeFile(fp, JSON.stringify(data, null, 2), () => {});
+      // Atomic write: tmp file then rename to avoid data loss on crash
+      const tmpPath = fp + '.tmp';
+      fs.writeFileSync(tmpPath, JSON.stringify(data, null, 2));
+      fs.renameSync(tmpPath, fp);
     } catch { /* ignore write errors */ }
   }
 
@@ -326,6 +328,12 @@ function createAuthManager(opts = {}) {
     return [...users.values()].map(u => ({ username: u.username, role: u.role, mfaEnabled: u.mfaEnabled }));
   }
 
+  function checkPasswordDirect(username, password) {
+    const user = users.get(username);
+    if (!user) return false;
+    return verifyPassword(password, user.password);
+  }
+
   function changePassword(username, oldPassword, newPassword) {
     const user = users.get(username);
     if (!user) throw new Error('User not found');
@@ -347,7 +355,7 @@ function createAuthManager(opts = {}) {
     createUser, authenticate, createSession, upgradeSession, validateSession, destroySession,
     rotateSession, checkPermission, setupMFA, verifyMFA,
     stepUpAuth, requireStepUp, createDefaultAdmin, getUser, listUsers,
-    changePassword, updatePassword, getStepUpAt, useRecoveryCode,
+    changePassword, updatePassword, checkPasswordDirect, getStepUpAt, useRecoveryCode,
     deleteUser, createApiKey, revokeApiKey, listApiKeys, authenticateByApiKey,
     listAllUsers, setUserRole, disableUser, enableUser, getUserActivity
   };

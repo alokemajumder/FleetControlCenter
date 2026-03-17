@@ -42,7 +42,11 @@ function createReceiptStore(opts = {}) {
     if (!dir) return;
     try {
       fs.mkdirSync(dir, { recursive: true });
-      fs.writeFileSync(path.join(dir, 'keys.json'), JSON.stringify({ privateKey: signingKey, publicKey: verifyKey }));
+      const keysPath = path.join(dir, 'keys.json');
+      fs.writeFileSync(keysPath, JSON.stringify({ privateKey: signingKey, publicKey: verifyKey }));
+      // Restrict file permissions to owner-only since this contains a private key.
+      // If the file system is compromised, the key should be rotated.
+      fs.chmodSync(keysPath, 0o600);
     } catch { /* ignore */ }
   }
 

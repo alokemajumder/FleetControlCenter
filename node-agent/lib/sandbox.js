@@ -11,6 +11,7 @@ function createSandbox(config = {}) {
   const argumentConstraints = config.argumentConstraints || {};
 
   function isPathAllowed(targetPath) {
+    if (targetPath.includes('\0')) return { allowed: false, reason: 'Null bytes in path' };
     const resolved = path.resolve(targetPath);
     // Check if the raw input contained traversal sequences
     if (targetPath.includes('..')) {
@@ -84,7 +85,7 @@ function createSandbox(config = {}) {
     if (argumentConstraints[command]) {
       const constraints = argumentConstraints[command];
       for (const arg of args) {
-        if (constraints.disallowed && constraints.disallowed.some(d => arg.includes(d))) {
+        if (constraints.disallowed && constraints.disallowed.some(d => arg === d || arg.startsWith(d + '=') || arg.startsWith(d + ' '))) {
           return { allowed: false, reason: `Argument not allowed: ${arg}` };
         }
         if (constraints.allowed && !constraints.allowed.some(a => arg === a || arg.startsWith(a))) {
@@ -92,19 +93,18 @@ function createSandbox(config = {}) {
         }
       }
     }
-    // Check paths in args
+    // Check paths in args - resolve ALL non-flag arguments against CWD
     for (const arg of args) {
-      if (arg.startsWith('/') || arg.startsWith('./') || arg.startsWith('../') || arg.includes('..')) {
-        // It looks like a path
-        const pathCheck = isPathAllowed(arg);
-        if (!pathCheck.allowed) return { allowed: false, reason: pathCheck.reason || 'Path not allowed' };
-        const resolved = path.resolve(arg);
-        if (isPathProtected(resolved) && !options.approveProtected) {
-          return { allowed: false, reason: `Protected path requires approval: ${resolved}` };
-        }
-        const symlinkCheck = checkSymlink(arg);
-        if (!symlinkCheck.safe) return { allowed: false, reason: symlinkCheck.reason };
+      // Skip flags (arguments starting with -)
+      if (arg.startsWith('-')) continue;
+      const resolved = path.resolve(arg);
+      const pathCheck = isPathAllowed(arg);
+      if (!pathCheck.allowed) return { allowed: false, reason: pathCheck.reason || 'Path not allowed' };
+      if (isPathProtected(resolved) && !options.approveProtected) {
+        return { allowed: false, reason: `Protected path requires approval: ${resolved}` };
       }
+      const symlinkCheck = checkSymlink(arg);
+      if (!symlinkCheck.safe) return { allowed: false, reason: symlinkCheck.reason };
     }
     return { allowed: true };
   }

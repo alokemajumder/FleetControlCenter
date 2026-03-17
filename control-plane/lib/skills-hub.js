@@ -302,6 +302,9 @@ function createSkillsHub(opts = {}) {
     if (!skill) throw new Error('Skill not found: ' + id);
     skill.status = 'quarantined';
     if (reason) {
+      if (!skill.securityScan) {
+        skill.securityScan = { scannedAt: null, score: 0, issues: [], passed: false };
+      }
       skill.securityScan.issues.push({
         severity: 'critical',
         type: 'manual-quarantine',
