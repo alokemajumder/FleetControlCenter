@@ -64,7 +64,7 @@ function formatTable(headers, rows, widths) {
 }
 
 // ── HTTP client ──
-function request(method, urlStr, body = null, token = null) {
+function request(method, urlStr, body = null, token = null, extraHeaders = null) {
   return new Promise((resolve, reject) => {
     const url = new URL(urlStr);
     const isHttps = url.protocol === 'https:';
@@ -77,6 +77,7 @@ function request(method, urlStr, body = null, token = null) {
       headers: { 'Content-Type': 'application/json' }
     };
     if (token) opts.headers['Authorization'] = `Bearer ${token}`;
+    if (extraHeaders) Object.assign(opts.headers, extraHeaders);
     const req = mod.request(opts, (res) => {
       const chunks = [];
       res.on('data', d => chunks.push(d));
@@ -88,7 +89,10 @@ function request(method, urlStr, body = null, token = null) {
       });
     });
     req.setTimeout(30000, () => { req.destroy(new Error('Request timed out')); });
-    req.on('error', reject);
+    req.on('error', (e) => {
+      e.message = e.message || e.code || 'Connection failed';
+      reject(e);
+    });
     if (body) req.write(typeof body === 'string' ? body : JSON.stringify(body));
     req.end();
   });
@@ -241,32 +245,54 @@ async function cmdInit() {
 }
 
 async function cmdEnroll(host, token, options) {
+  const secret = options.secret || process.env.CLAWCC_NODE_SECRET;
+  if (!secret) {
+    err('Node shared secret required. Use --secret <secret> or set CLAWCC_NODE_SECRET.');
+    process.exitCode = 1;
+    return;
+  }
   const hostname = os.hostname();
+  const nodeId = options['node-id'] || hostname;
   const nodeInfo = {
+    nodeId,
     hostname,
-    platform: os.platform(),
+    os: os.platform(),
     arch: os.arch(),
     cpus: os.cpus().length,
     memory: Math.round(os.totalmem() / 1024 / 1024),
     nodeVersion: process.version
   };
-  out(`Enrolling node ${c('bold', hostname)}...`);
+  out(`Enrolling node ${c('bold', hostname)} (id: ${nodeId})...`);
   try {
-    const res = await request('POST', `${host}/api/fleet/register`, nodeInfo, token);
+    const urlPath = '/api/fleet/register';
+    const timestamp = String(Date.now());
+    const nonce = crypto.randomBytes(16).toString('hex');
+    const payload = `POST\n${urlPath}\n${timestamp}\n`;
+    const signature = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+    const hmacHeaders = {
+      'X-FCC-NodeId': nodeId,
+      'X-FCC-Timestamp': timestamp,
+      'X-FCC-Nonce': nonce,
+      'X-FCC-Signature': signature
+    };
+    const res = await request('POST', `${host}${urlPath}`, nodeInfo, null, hmacHeaders);
     if (res.status === 200 || res.status === 201) {
-      out(c('green', `Node enrolled successfully. ID: ${res.data.id || res.data.nodeId || 'assigned'}`));
+      out(c('green', `Node enrolled successfully. ID: ${res.data.id || res.data.nodeId || nodeId}`));
     } else {
       err(`Enrollment failed: ${JSON.stringify(res.data)}`);
+      process.exitCode = 1;
     }
   } catch (e) {
     err(`Connection failed: ${e.message}`);
+    process.exitCode = 1;
   }
 }
 
 async function cmdStatus(host, token, format) {
   try {
     const res = await request('GET', `${host}/api/fleet/nodes`, null, token);
-    const nodes = Array.isArray(res.data) ? res.data : (res.data.nodes || []);
+    const nodesRaw = Array.isArray(res.data) ? res.data : (res.data.nodes || []);
+    const nodes = Array.isArray(nodesRaw) ? nodesRaw : Object.entries(nodesRaw).map(([id, n]) => ({ id, ...n }));
     if (format === 'json') {
       out(JSON.stringify(res.data, null, 2));
       return;
@@ -280,13 +306,15 @@ async function cmdStatus(host, token, format) {
     out(`  Offline:      ${offline > 0 ? c('red', String(offline)) : '0'}`);
   } catch (e) {
     err(`Failed to get status: ${e.message}`);
+    process.exitCode = 1;
   }
 }
 
 async function cmdNodes(host, token, format) {
   try {
     const res = await request('GET', `${host}/api/fleet/nodes`, null, token);
-    const nodes = Array.isArray(res.data) ? res.data : (res.data.nodes || []);
+    const nodesRaw = Array.isArray(res.data) ? res.data : (res.data.nodes || []);
+    const nodes = Array.isArray(nodesRaw) ? nodesRaw : Object.entries(nodesRaw).map(([id, n]) => ({ id, ...n }));
     if (format === 'json') {
       out(JSON.stringify(nodes, null, 2));
       return;
@@ -306,13 +334,15 @@ async function cmdNodes(host, token, format) {
     out(formatTable(headers, rows));
   } catch (e) {
     err(`Failed to list nodes: ${e.message}`);
+    process.exitCode = 1;
   }
 }
 
 async function cmdSessions(host, token, format) {
   try {
     const res = await request('GET', `${host}/api/sessions`, null, token);
-    const sessions = Array.isArray(res.data) ? res.data : (res.data.sessions || []);
+    const sessionsRaw = Array.isArray(res.data) ? res.data : (res.data.sessions || []);
+    const sessions = Array.isArray(sessionsRaw) ? sessionsRaw : Object.entries(sessionsRaw).map(([id, s]) => ({ id, ...s }));
     if (format === 'json') {
       out(JSON.stringify(sessions, null, 2));
       return;
@@ -332,6 +362,7 @@ async function cmdSessions(host, token, format) {
     out(formatTable(headers, rows));
   } catch (e) {
     err(`Failed to list sessions: ${e.message}`);
+    process.exitCode = 1;
   }
 }
 
@@ -371,6 +402,7 @@ async function cmdPolicyList(host, token, format) {
     out(formatTable(headers, rows));
   } catch (e) {
     err(`Failed to list policies: ${e.message}`);
+    process.exitCode = 1;
   }
 }
 
@@ -383,9 +415,11 @@ async function cmdPolicyApply(host, token, filePath) {
       out(c('green', `Policy applied: ${data.name || data.id}`));
     } else {
       err(`Failed to apply policy: ${JSON.stringify(res.data)}`);
+      process.exitCode = 1;
     }
   } catch (e) {
     err(`Failed: ${e.message}`);
+    process.exitCode = 1;
   }
 }
 
@@ -396,6 +430,7 @@ async function cmdPolicySimulate(host, token, sessionId) {
     out(JSON.stringify(res.data, null, 2));
   } catch (e) {
     err(`Failed: ${e.message}`);
+    process.exitCode = 1;
   }
 }
 
@@ -406,7 +441,7 @@ async function cmdKillSession(host, token, id) {
   try {
     const res = await request('POST', `${host}/api/sessions/${id}/kill`, {}, token);
     out(res.status < 300 ? c('green', 'Session killed.') : c('red', `Failed: ${JSON.stringify(res.data)}`));
-  } catch (e) { err(e.message); }
+  } catch (e) { err(e.message); process.exitCode = 1; }
 }
 
 async function cmdKillNode(host, token, id) {
@@ -416,7 +451,7 @@ async function cmdKillNode(host, token, id) {
   try {
     const res = await request('POST', `${host}/api/fleet/nodes/${id}/kill`, {}, token);
     out(res.status < 300 ? c('green', 'All sessions on node killed.') : c('red', `Failed: ${JSON.stringify(res.data)}`));
-  } catch (e) { err(e.message); }
+  } catch (e) { err(e.message); process.exitCode = 1; }
 }
 
 async function cmdKillGlobal(host, token) {
@@ -425,7 +460,7 @@ async function cmdKillGlobal(host, token) {
   try {
     const res = await request('POST', `${host}/api/kill/global`, {}, token);
     out(res.status < 300 ? c('green', 'Global kill executed.') : c('red', `Failed: ${JSON.stringify(res.data)}`));
-  } catch (e) { err(e.message); }
+  } catch (e) { err(e.message); process.exitCode = 1; }
 }
 
 async function cmdVerify(filePath) {
@@ -480,7 +515,7 @@ async function cmdExport(host, token, sessionId) {
     const outPath = `evidence-${safeId}.json`;
     fs.writeFileSync(outPath, JSON.stringify(res.data, null, 2));
     out(c('green', `Evidence bundle saved to ${outPath}`));
-  } catch (e) { err(e.message); }
+  } catch (e) { err(e.message); process.exitCode = 1; }
 }
 
 async function cmdUsersList(host, token, format) {
@@ -494,7 +529,7 @@ async function cmdUsersList(host, token, format) {
     const headers = ['Username', 'Role', 'MFA'];
     const rows = users.map(u => [u.username, u.role, u.mfaEnabled ? 'yes' : 'no']);
     out(formatTable(headers, rows));
-  } catch (e) { err(e.message); }
+  } catch (e) { err(e.message); process.exitCode = 1; }
 }
 
 async function cmdUsersCreate(host, token) {
@@ -511,7 +546,7 @@ async function cmdUsersCreate(host, token) {
     } else {
       err(JSON.stringify(res.data));
     }
-  } catch (e) { rl.close(); err(e.message); }
+  } catch (e) { rl.close(); err(e.message); process.exitCode = 1; }
 }
 
 async function cmdReceiptsVerify(host, token, options) {
@@ -523,7 +558,7 @@ async function cmdReceiptsVerify(host, token, options) {
     } else {
       out(c('red', `Receipt chain for ${date} is INVALID: ${res.data.reason || 'unknown'}`));
     }
-  } catch (e) { err(e.message); }
+  } catch (e) { err(e.message); process.exitCode = 1; }
 }
 
 async function cmdDrift(host, token, sessionId, format) {
@@ -555,7 +590,7 @@ async function cmdDrift(host, token, sessionId, format) {
         out(`  - ${r}`);
       }
     }
-  } catch (e) { err(e.message); }
+  } catch (e) { err(e.message); process.exitCode = 1; }
 }
 
 async function cmdKeygen() {
@@ -580,7 +615,7 @@ ${bold('Usage:')} clawcc <command> [options]
 
 ${bold('Commands:')}
   init              Initialize FCC configuration
-  enroll            Enroll a node into the fleet
+  enroll            Enroll a node (requires --secret)
   status            Show fleet status
   nodes             List fleet nodes
   sessions          List active sessions
@@ -604,6 +639,8 @@ ${bold('Options:')}
   --host <url>      Control plane URL (default: http://localhost:3400)
   --token <token>   Auth token
   --format <fmt>    Output format: table (default), json
+  --secret <s>      Node shared secret for HMAC auth (enroll)
+  --node-id <id>    Node ID override (enroll, default: hostname)
   --no-color        Disable colors
 `);
 }

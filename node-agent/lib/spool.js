@@ -146,7 +146,7 @@ function sendEvent(baseUrl, event, nodeSecret) {
     const timestamp = String(Date.now());
     const nonce = crypto.randomBytes(16).toString('hex');
     const hmac = crypto.createHmac('sha256', nodeSecret);
-    hmac.update('POST\n/api/events/ingest\n' + timestamp + '\n' + data);
+    hmac.update('POST\n/api/events/ingest\n' + timestamp + '\n');
     const signature = hmac.digest('hex');
 
     const options = {

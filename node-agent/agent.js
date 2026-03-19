@@ -85,7 +85,7 @@ function signedRequest(method, urlPath, body) {
     const timestamp = String(Date.now());
     const nonce = crypto.randomBytes(16).toString('hex');
     const hmac = crypto.createHmac('sha256', nodeSecret);
-    hmac.update(method + '\n' + url.pathname + '\n' + timestamp + '\n' + data);
+    hmac.update(method + '\n' + url.pathname + '\n' + timestamp + '\n');
     const signature = hmac.digest('hex');
 
     const options = {
