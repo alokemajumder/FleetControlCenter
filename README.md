@@ -38,11 +38,23 @@ FCC manages sessions from **any AI coding agent** — not just one vendor. The n
 | | Agents |
 |-|--------|
 | **Major** | Claude Code, Codex CLI, GitHub Copilot, Cursor, Codeium/Windsurf, Gemini Code Assist, Augment, Kiro, Amazon Q, Tabnine |
-| **NVIDIA** | NemoClaw, OpenShell, Nemotron |
+| **NVIDIA** | [NemoClaw](https://build.nvidia.com/nemoclaw), [OpenShell](https://docs.nvidia.com/openshell/latest/index.html), [Nemotron](https://developer.nvidia.com/nemotron) |
 | **Open Source** | Continue, OpenHands, Tabby, Goose, OpenCode, Cline |
 | **Custom** | Any agent via `discoveryPaths` config — no vendor lock-in |
 
 Each agent gets: heartbeat monitoring, stale detection, SOUL files (markdown personality definitions), event timeline, drift scoring, and fleet-wide scorecards.
+
+### NVIDIA AI Agent Integration
+
+FCC provides first-class support for [NVIDIA's AI agent ecosystem](https://nvidianews.nvidia.com/news/ai-agents):
+
+| Agent | Role | Discovery Path | Models |
+|-------|------|----------------|--------|
+| [**NemoClaw**](https://build.nvidia.com/nemoclaw) | Enterprise AI coding agent stack built on NVIDIA NeMo. Provides tool-augmented code generation with enterprise guardrails. | `~/.nemoclaw` | `nemoclaw-enterprise`, `nemoclaw-lite` |
+| [**OpenShell**](https://docs.nvidia.com/openshell/latest/index.html) | Secure sandboxed runtime for AI agent execution. Isolates agent processes with GPU-aware resource controls. | `~/.openshell`, `~/.config/openshell` | `openshell-runtime`, `openshell-sandbox` |
+| [**Nemotron**](https://developer.nvidia.com/nemotron) | NVIDIA's open-weight LLM family optimized for coding, reasoning, and agentic workflows. Available in nano (30B), super (120B), and ultra (253B) parameter variants. | Via provider config | `nemotron-nano-30b`, `nemotron-super-120b`, `nemotron-ultra-253b` |
+
+FCC monitors these agents with the same controls as any other provider: sandbox enforcement, drift scoring, policy evaluation, kill switch, and tamper-evident audit logging. Credential files (`~/.nemoclaw/credentials.json`, `~/.openshell/config.json`, `~/.config/openshell/credentials.json`) are automatically protected from agent access.
 
 ### Enforce Policy — Not Just Observe
 
@@ -268,6 +280,29 @@ node cli/clawcc.js evidence <session>  # Export signed evidence ZIP
 node cli/clawcc.js keygen              # Generate Ed25519 key pair
 node cli/clawcc.js verify-receipts     # Verify receipt chain integrity
 ```
+
+---
+
+## Supported Agent Models
+
+FCC tracks usage and enforces policy across **16 providers** and **30+ models**:
+
+| Provider | Models |
+|----------|--------|
+| Claude Code | `claude-sonnet-4-20250514`, `claude-opus-4-20250514`, `claude-haiku-4-5-20251001` |
+| Codex CLI | `codex-mini`, `o4-mini`, `o3` |
+| GitHub Copilot | `gpt-4o`, `gpt-4o-mini`, `copilot-agent-v2` |
+| Gemini | `gemini-2.5-pro`, `gemini-2.5-flash` |
+| Cursor | `cursor-fast`, `cursor-slow` |
+| Codeium/Windsurf | `windsurf-cascade`, `codeium-autocomplete` |
+| Amazon Q | `amazon-q-developer`, `amazon-q-transform` |
+| [NemoClaw](https://build.nvidia.com/nemoclaw) | `nemoclaw-enterprise`, `nemoclaw-lite` |
+| [OpenShell](https://docs.nvidia.com/openshell/latest/index.html) | `openshell-runtime`, `openshell-sandbox` |
+| [Nemotron](https://developer.nvidia.com/nemotron) | `nemotron-nano-30b`, `nemotron-super-120b`, `nemotron-ultra-253b` |
+| Goose | `goose-default` |
+| Aider | `aider-architect`, `aider-editor` |
+| Cline | `cline-v3` |
+| OpenCode | `opencode-default` |
 
 ---
 

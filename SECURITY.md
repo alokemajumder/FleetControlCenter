@@ -36,7 +36,8 @@ Use [GitHub Security Advisories](https://github.com/alokemajumder/FleetControlCe
 
 | Version           | Supported |
 | ----------------- | --------- |
-| 0.1.x (current)   | Yes       |
+| 0.2.x (current)   | Yes       |
+| 0.1.x             | Yes       |
 
 ## Security Architecture
 

@@ -5,6 +5,50 @@ All notable changes to Fleet Control Center are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-03-20
+
+### Added
+
+#### NVIDIA AI Agent Support
+- [NemoClaw](https://build.nvidia.com/nemoclaw) integration: enterprise AI coding agent with `nemoclaw-enterprise` and `nemoclaw-lite` models, session discovery via `~/.nemoclaw`, credential protection for `~/.nemoclaw/credentials.json`.
+- [OpenShell](https://docs.nvidia.com/openshell/latest/index.html) integration: secure sandboxed agent runtime with `openshell-runtime` and `openshell-sandbox` models, discovery via `~/.openshell` and `~/.config/openshell`, credential protection for config and credentials files.
+- [Nemotron](https://developer.nvidia.com/nemotron) integration: NVIDIA open-weight LLM family with `nemotron-nano-30b`, `nemotron-super-120b`, and `nemotron-ultra-253b` models for coding, reasoning, and agentic workflows.
+- NVIDIA agent filter buttons in fleet UI with brand-colored indicators.
+- Agent tracker expanded from 7 to 23 supported agent types.
+
+#### Production Hardening
+- Shared `fleet-commands` module for kill switch command delivery across session, node, and global scopes.
+- Atomic file writes (write-to-temp-then-rename) for all snapshot, user, policy, and fleet data files.
+- Sequential audit writes (`appendFileSync`) to prevent hash chain corruption under concurrent access.
+- SSRF prevention with path validation in gateway proxy.
+- Prototype pollution guard in config manager (`__proto__`, `constructor`, `prototype` keys blocked).
+
+### Fixed
+
+- **Step-up auth middleware**: `requireStepUp` called non-existent `getSession()` (now uses `validateSession()`) and checked wrong field `lastStepUp` (now delegates to `authModule.requireStepUp()`).
+- **HMAC body mismatch**: Node agent signed request body but server verified with empty string; both sides now exclude body from HMAC payload.
+- **CLI crashes**: API returns `{nodes: {}}` (object) but CLI expected arrays; added `Object.entries` conversion. Added 30s request timeout, proper exit codes, and HMAC-signed enroll command.
+- **Demo data naming**: Provider names `windsurf` and `amazon-q` didn't match `SUPPORTED_AGENT_TYPES` (`codeium`, `amazonq`).
+- **Policy enforcement**: Wired stubbed policy adapter to real engine (`evaluateEvent`/`evaluateSession`).
+- **Kill switch**: Connected to fleet-commands for actual command delivery to node agents.
+- **Sandbox hardening**: Null byte rejection, relative path resolution, token-boundary argument matching.
+- **Spool race condition**: Drain uses `.draining` file rename to prevent concurrent replay.
+- **Webhook secret masking**: Single-webhook GET response now masks the secret field.
+- **Skills hub**: Null guard on `securityScan` before quarantine push.
+- **Event routes**: `[...sessEvents].reverse()` instead of mutating original array.
+- **Channel routes**: Double-cleanup guard with `cleanedUp` boolean.
+- **SQLite heatmap**: Fixed date boundary (`days - 1`) for consistent day counts.
+- **Onboarding**: Scrub plaintext password before persisting setup data.
+- **UI**: Modal backdrop listener registered once, `pauseReplay` on navigation, HTML-escaped `truncId`.
+- **Security headers**: Renamed `X-ClawCC-*` to `X-FCC-*` across all request signing.
+
+### Changed
+
+- Enterprise dark theme UI with Inter + JetBrains Mono fonts, indigo accent palette, solid elevated cards.
+- Discovery paths expanded to include NVIDIA agent directories in control plane, node agent, and ops routes.
+- Protected paths expanded with [OpenShell](https://docs.nvidia.com/openshell/latest/index.html) credential files.
+- Demo data generator updated with 16 providers (added [Nemotron](https://developer.nvidia.com/nemotron), [OpenShell](https://docs.nvidia.com/openshell/latest/index.html), corrected naming).
+
 ## [0.2.0] - 2026-03-12
 
 ### Added
@@ -13,7 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Doctor diagnostics engine with 12 system health checks and 4 auto-fixable issues.
 - Backup and restore manager with timestamped directories and JSON manifests.
 - Gateway federation mode for multi-fleet proxy and fan-out aggregation with health checks.
-- Agent tracker supporting 7 agent types with heartbeat, stale detection, and fleet summary.
+- Agent tracker supporting 23 agent types (including [NVIDIA NemoClaw](https://build.nvidia.com/nemoclaw), [OpenShell](https://docs.nvidia.com/openshell/latest/index.html), and [Nemotron](https://developer.nvidia.com/nemotron)) with heartbeat, stale detection, and fleet summary.
 - Agent SOUL files (personality/behavior markdown) with disk sync and per-agent CRUD.
 - Channels subsystem (broadcast/direct/group) with JSONL persistence and SSE notifications.
 - 7-step onboarding wizard with per-step validation and security scan integration.
@@ -132,6 +176,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Example configurations for control plane and node agent.
 - Demo data generator (30 days, 3 nodes, 14 providers, ~225 sessions).
 
+[0.2.1]: https://github.com/alokemajumder/FleetControlCenter/releases/tag/v0.2.1
 [0.2.0]: https://github.com/alokemajumder/FleetControlCenter/releases/tag/v0.2.0
 [0.1.1]: https://github.com/alokemajumder/FleetControlCenter/releases/tag/v0.1.1
 [0.1.0]: https://github.com/alokemajumder/FleetControlCenter/releases/tag/v0.1.0

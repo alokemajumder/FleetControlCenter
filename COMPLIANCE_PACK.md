@@ -86,7 +86,7 @@ All evidence is stored in append-only, hash-chained formats with Ed25519 digital
 | Policy definitions   | `policies/*.json`                         | JSON                      | Audit-logged changes, atomic writes           |
 | Tripwire configs     | `tripwires/*.json`                        | JSON                      | Audit-logged changes, atomic writes           |
 | Command allowlists   | `allowlists/commands.json`                | JSON                      | Static configuration                          |
-| Path allowlists      | `allowlists/paths.json`                   | JSON                      | Static configuration                          |
+| Path allowlists      | `allowlists/paths.json`                   | JSON                      | Static configuration; includes [NVIDIA agent](https://nvidianews.nvidia.com/news/ai-agents) credential protection |
 
 ### 3.2 API Evidence Endpoints
 

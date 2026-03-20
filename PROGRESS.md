@@ -1,9 +1,10 @@
 # Fleet Control Center Project Progress
 
-> **Last updated:** 2026-03-12
+> **Last updated:** 2026-03-20
 > **Test results:** 833 tests passing across 31 suites (0 failures)
 > **External dependencies:** 0 (Node.js standard library only)
 > **Data layer:** Hybrid -- JSONL source of truth + in-memory index + optional SQLite acceleration (node:sqlite)
+> **Supported agents:** 23 types across 16 providers including [NVIDIA NemoClaw](https://build.nvidia.com/nemoclaw), [OpenShell](https://docs.nvidia.com/openshell/latest/index.html), and [Nemotron](https://developer.nvidia.com/nemotron)
 
 ---
 
@@ -54,7 +55,7 @@ These constraints are non-negotiable and fully satisfied.
 | /policies      | 1     | Complete | default.policy.json with rules                                  |
 | /tripwires     | 1     | Complete | Honeytoken definitions                                          |
 | /skills        | 1     | Complete | Registry JSON with canary configuration                         |
-| /scripts       | 1     | Complete | Demo data generator (30 days, 3 nodes, 14 providers, ~225 sessions) |
+| /scripts       | 1     | Complete | Demo data generator (30 days, 3 nodes, 16 providers, ~225 sessions) |
 | /test          | 34    | Complete | 31 suites plus runner, 833 tests, all passing                   |
 
 ---
@@ -208,7 +209,7 @@ These constraints are non-negotiable and fully satisfied.
 | Doctor diagnostics (12 checks) with auto-fix               | Complete |
 | Backup and restore with manifests                          | Complete |
 | Gateway federation (multi-fleet proxy and aggregation)     | Complete |
-| Agent tracker (7 types, heartbeat, stale detection)        | Complete |
+| Agent tracker (23 types, heartbeat, stale detection)       | Complete |
 | Agent SOUL files (personality/behavior markdown)           | Complete |
 | Channels (broadcast/direct/group) with SSE                 | Complete |
 | Onboarding wizard (7-step guided setup)                    | Complete |

@@ -144,16 +144,18 @@ Node agents sign every request to the control plane:
 ```
 Signature = HMAC-SHA256(
   sharedSecret,
-  method + "\n" + path + "\n" + timestamp + "\n" + body
+  method + "\n" + path + "\n" + timestamp + "\n"
 )
 ```
 
+> **Note:** The request body is excluded from the HMAC payload to avoid serialization mismatches between sender and verifier. Integrity of the body is protected by the authenticated session context.
+
 Headers sent with each signed request:
 
-- `x-clawcc-nodeid` -- Node identifier
-- `x-clawcc-timestamp` -- Unix timestamp (milliseconds)
-- `x-clawcc-nonce` -- Random nonce (UUID)
-- `x-clawcc-signature` -- HMAC-SHA256 hex digest
+- `X-FCC-NodeId` -- Node identifier
+- `X-FCC-Timestamp` -- Unix timestamp (milliseconds)
+- `X-FCC-Nonce` -- Random nonce (UUID)
+- `X-FCC-Signature` -- HMAC-SHA256 hex digest
 
 Security controls:
 
@@ -255,7 +257,19 @@ Only explicitly allowed commands can be executed on agent nodes:
 
 - `node-agent/lib/sandbox.js` -- `createSandbox()` factory with `validateCommand()`, `isPathAllowed()`, `checkSymlink()`, `validateFileOperation()`
 - `allowlists/commands.json` -- Default allowed commands (`restart-agent`, `restart-clawcc-agent`, `tailscale-status`, `disk-usage`, `process-list`, `rotate-logs`, `git-log`, `list-cron`)
-- `allowlists/paths.json` -- Allowed paths (20+ AI agent configuration paths), protected paths (credential files), forbidden paths (`~/.ssh`, `~/.gnupg`, `~/.aws`, `/etc/shadow`, `/etc/passwd`)
+- `allowlists/paths.json` -- Allowed paths (30+ AI agent configuration paths including [NemoClaw](https://build.nvidia.com/nemoclaw), [OpenShell](https://docs.nvidia.com/openshell/latest/index.html), and [Nemotron](https://developer.nvidia.com/nemotron)), protected credential paths, forbidden paths (`~/.ssh`, `~/.gnupg`, `~/.aws`, `/etc/shadow`, `/etc/passwd`)
+
+### 6.4 NVIDIA Agent Credential Protection
+
+FCC's path sandbox includes specific protections for [NVIDIA AI agent](https://nvidianews.nvidia.com/news/ai-agents) credential files:
+
+| Agent | Protected Path | Description |
+|-------|---------------|-------------|
+| [NemoClaw](https://build.nvidia.com/nemoclaw) | `~/.nemoclaw/credentials.json` | API credentials for the NemoClaw coding agent |
+| [OpenShell](https://docs.nvidia.com/openshell/latest/index.html) | `~/.openshell/config.json` | Runtime configuration with auth tokens |
+| [OpenShell](https://docs.nvidia.com/openshell/latest/index.html) | `~/.config/openshell/credentials.json` | XDG-compliant credential storage |
+
+These files are classified as **protected** — agents can discover and monitor sessions in the parent directories (`~/.nemoclaw`, `~/.openshell`, `~/.config/openshell`) but cannot read or modify credential files without explicit approval flags. This prevents compromised agents from exfiltrating NVIDIA API keys or runtime tokens.
 
 ---
 
