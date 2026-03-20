@@ -53,11 +53,11 @@ function requireStepUp(req, authModule, config) {
   const token = req.cookies && req.cookies.clawcc_session;
   if (!token) return { authorized: false, reason: 'No session' };
 
-  const session = authModule.getSession(token);
+  const session = authModule.validateSession(token);
   if (!session) return { authorized: false, reason: 'Invalid session' };
 
-  const windowMs = (config && config.auth && config.auth.stepUpWindowMs) || 300000;
-  if (!session.lastStepUp || Date.now() - session.lastStepUp > windowMs) {
+  // authModule.requireStepUp checks stepUpAt + window internally
+  if (authModule.requireStepUp && !authModule.requireStepUp(token)) {
     return { authorized: false, reason: 'Step-up authentication required' };
   }
   return { authorized: true };

@@ -1655,6 +1655,7 @@ async function renderAgentsPage() {
       <button class="btn btn-sm btn-ghost" data-agent-type="openclaw">OpenClaw</button>
       <button class="btn btn-sm btn-ghost" data-agent-type="nemoclaw">NemoClaw</button>
       <button class="btn btn-sm btn-ghost" data-agent-type="openshell">OpenShell</button>
+      <button class="btn btn-sm btn-ghost" data-agent-type="nemotron">Nemotron</button>
       <button class="btn btn-sm btn-ghost" data-agent-type="custom">Custom</button>
     </div>
     <div class="glass-card table-wrapper mb-6">

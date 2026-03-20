@@ -17,8 +17,8 @@ for (const d of dirs) {
 
 const nodeIds = ['node-dev-alpha', 'node-dev-beta', 'node-staging-gamma'];
 const providers = [
-  'claude', 'codex', 'copilot', 'gemini', 'cursor', 'windsurf', 'amazon-q',
-  'openclaw', 'zeroclaw', 'nemoclaw', 'openshell', 'goose', 'aider', 'cline', 'opencode'
+  'claude', 'codex', 'copilot', 'gemini', 'cursor', 'codeium', 'amazonq',
+  'openclaw', 'zeroclaw', 'nemoclaw', 'openshell', 'nemotron', 'goose', 'aider', 'cline', 'opencode'
 ];
 const models = {
   claude: ['claude-sonnet-4-20250514', 'claude-opus-4-20250514', 'claude-haiku-4-5-20251001'],
@@ -26,12 +26,13 @@ const models = {
   copilot: ['gpt-4o', 'gpt-4o-mini', 'copilot-agent-v2'],
   gemini: ['gemini-2.5-pro', 'gemini-2.5-flash'],
   cursor: ['cursor-fast', 'cursor-slow'],
-  windsurf: ['windsurf-cascade', 'codeium-autocomplete'],
-  'amazon-q': ['amazon-q-developer', 'amazon-q-transform'],
+  codeium: ['windsurf-cascade', 'codeium-autocomplete'],
+  amazonq: ['amazon-q-developer', 'amazon-q-transform'],
   openclaw: ['openclaw-v3', 'nanoclaw-v1', 'kimiclaw-v2', 'maxclaw-v1'],
   zeroclaw: ['zeroclaw-rust-v1'],
   nemoclaw: ['nemoclaw-enterprise', 'nemoclaw-lite'],
   openshell: ['openshell-runtime', 'openshell-sandbox'],
+  nemotron: ['nemotron-nano-30b', 'nemotron-super-120b', 'nemotron-ultra-253b'],
   goose: ['goose-default'],
   aider: ['aider-architect', 'aider-editor'],
   cline: ['cline-v3'],

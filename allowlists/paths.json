@@ -41,7 +41,8 @@
     "~/.zeroclaw/config.toml",
     "~/.nanobot/config.json",
     "~/.nemoclaw/credentials.json",
-    "~/.openshell/config.json"
+    "~/.openshell/config.json",
+    "~/.config/openshell/credentials.json"
   ],
   "forbidden": [
     "~/.ssh",
