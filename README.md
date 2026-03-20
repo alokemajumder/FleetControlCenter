@@ -38,6 +38,7 @@ FCC manages sessions from **any AI coding agent** — not just one vendor. The n
 | | Agents |
 |-|--------|
 | **Major** | Claude Code, Codex CLI, GitHub Copilot, Cursor, Codeium/Windsurf, Gemini Code Assist, Augment, Kiro, Amazon Q, Tabnine |
+| **NVIDIA** | NemoClaw, OpenShell, Nemotron |
 | **Open Source** | Continue, OpenHands, Tabby, Goose, OpenCode, Cline |
 | **Custom** | Any agent via `discoveryPaths` config — no vendor lock-in |
 

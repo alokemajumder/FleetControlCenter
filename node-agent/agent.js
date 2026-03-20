@@ -49,6 +49,7 @@ const discoveryPaths = config.discoveryPaths || [
   '~/.aws/amazonq', '~/.config/TabNine',
   // Open Source agents
   '~/.openclaw', '~/.zeroclaw', '~/.nanobot', '~/.nemoclaw',
+  '~/.openshell', '~/.config/openshell',
   '~/.continue', '~/.openhands', '~/.tabby',
   '~/.config/goose', '~/.config/opencode',
   '~/Documents/Cline'

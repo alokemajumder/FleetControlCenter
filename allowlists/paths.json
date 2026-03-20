@@ -18,6 +18,8 @@
     "~/.zeroclaw",
     "~/.nanobot",
     "~/.nemoclaw",
+    "~/.openshell",
+    "~/.config/openshell",
     "~/.continue",
     "~/.openhands",
     "~/.tabby",
@@ -37,7 +39,9 @@
     "~/.augment/settings.json",
     "~/.config/opencode/auth.json",
     "~/.zeroclaw/config.toml",
-    "~/.nanobot/config.json"
+    "~/.nanobot/config.json",
+    "~/.nemoclaw/credentials.json",
+    "~/.openshell/config.json"
   ],
   "forbidden": [
     "~/.ssh",

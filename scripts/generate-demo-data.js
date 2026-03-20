@@ -18,7 +18,7 @@ for (const d of dirs) {
 const nodeIds = ['node-dev-alpha', 'node-dev-beta', 'node-staging-gamma'];
 const providers = [
   'claude', 'codex', 'copilot', 'gemini', 'cursor', 'windsurf', 'amazon-q',
-  'openclaw', 'zeroclaw', 'nemoclaw', 'goose', 'aider', 'cline', 'opencode'
+  'openclaw', 'zeroclaw', 'nemoclaw', 'openshell', 'goose', 'aider', 'cline', 'opencode'
 ];
 const models = {
   claude: ['claude-sonnet-4-20250514', 'claude-opus-4-20250514', 'claude-haiku-4-5-20251001'],
@@ -31,6 +31,7 @@ const models = {
   openclaw: ['openclaw-v3', 'nanoclaw-v1', 'kimiclaw-v2', 'maxclaw-v1'],
   zeroclaw: ['zeroclaw-rust-v1'],
   nemoclaw: ['nemoclaw-enterprise', 'nemoclaw-lite'],
+  openshell: ['openshell-runtime', 'openshell-sandbox'],
   goose: ['goose-default'],
   aider: ['aider-architect', 'aider-editor'],
   cline: ['cline-v3'],

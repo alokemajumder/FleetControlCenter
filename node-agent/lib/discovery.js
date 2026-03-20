@@ -15,6 +15,7 @@ function discoverSessions(configuredPaths) {
     '~/.codeium', '~/.gemini', '~/.augment', '~/.kiro',
     '~/.aws/amazonq', '~/.config/TabNine',
     '~/.openclaw', '~/.zeroclaw', '~/.nanobot', '~/.nemoclaw',
+    '~/.openshell', '~/.config/openshell',
     '~/.continue', '~/.openhands', '~/.tabby',
     '~/.config/goose', '~/.config/opencode',
     '~/Documents/Cline'
@@ -70,6 +71,7 @@ function discoverMemory(configuredPaths) {
     '~/.codeium', '~/.gemini', '~/.augment', '~/.kiro',
     '~/.aws/amazonq', '~/.config/TabNine',
     '~/.openclaw', '~/.zeroclaw', '~/.nanobot', '~/.nemoclaw',
+    '~/.openshell', '~/.config/openshell',
     '~/.continue', '~/.openhands', '~/.tabby',
     '~/.config/goose', '~/.config/opencode',
     '~/Documents/Cline'

@@ -1626,7 +1626,9 @@ function agentTypeBadge(type) {
   const t = (type || 'unknown').toLowerCase();
   const colors = {
     claude: '#6366f1', codex: '#22c55e', hermes: '#f59e0b',
-    openclaw: '#3b82f6', custom: '#a855f7'
+    openclaw: '#3b82f6', nemoclaw: '#76b900', openshell: '#76b900', nemotron: '#76b900',
+    cursor: '#00d4aa', copilot: '#1f6feb', codeium: '#09b6a2',
+    custom: '#a855f7'
   };
   const color = colors[t] || '#71717a';
   return '<span class="agent-type-badge" style="--agent-color:' + color + '">' + escapeHtml(type || 'Unknown') + '</span>';
@@ -1651,6 +1653,8 @@ async function renderAgentsPage() {
       <button class="btn btn-sm btn-ghost" data-agent-type="codex">Codex</button>
       <button class="btn btn-sm btn-ghost" data-agent-type="hermes">Hermes</button>
       <button class="btn btn-sm btn-ghost" data-agent-type="openclaw">OpenClaw</button>
+      <button class="btn btn-sm btn-ghost" data-agent-type="nemoclaw">NemoClaw</button>
+      <button class="btn btn-sm btn-ghost" data-agent-type="openshell">OpenShell</button>
       <button class="btn btn-sm btn-ghost" data-agent-type="custom">Custom</button>
     </div>
     <div class="glass-card table-wrapper mb-6">

@@ -73,6 +73,7 @@ function registerOpsRoutes(router, config, modules) {
       '~/.codeium', '~/.gemini', '~/.augment', '~/.kiro',
       '~/.aws/amazonq', '~/.config/TabNine',
       '~/.openclaw', '~/.zeroclaw', '~/.nanobot', '~/.nemoclaw',
+      '~/.openshell', '~/.config/openshell',
       '~/.continue', '~/.openhands', '~/.tabby',
       '~/.config/goose', '~/.config/opencode',
       '~/Documents/Cline'
@@ -97,6 +98,7 @@ function registerOpsRoutes(router, config, modules) {
       '~/.codeium', '~/.gemini', '~/.augment', '~/.kiro',
       '~/.aws/amazonq', '~/.config/TabNine',
       '~/.openclaw', '~/.zeroclaw', '~/.nanobot', '~/.nemoclaw',
+      '~/.openshell', '~/.config/openshell',
       '~/.continue', '~/.openhands', '~/.tabby',
       '~/.config/goose', '~/.config/opencode',
       '~/Documents/Cline'
@@ -125,6 +127,7 @@ function registerOpsRoutes(router, config, modules) {
       '~/.codeium', '~/.gemini', '~/.augment', '~/.kiro',
       '~/.aws/amazonq', '~/.config/TabNine',
       '~/.openclaw', '~/.zeroclaw', '~/.nanobot', '~/.nemoclaw',
+      '~/.openshell', '~/.config/openshell',
       '~/.continue', '~/.openhands', '~/.tabby',
       '~/.config/goose', '~/.config/opencode',
       '~/Documents/Cline'
@@ -151,6 +154,7 @@ function registerOpsRoutes(router, config, modules) {
       '~/.codeium', '~/.gemini', '~/.augment', '~/.kiro',
       '~/.aws/amazonq', '~/.config/TabNine',
       '~/.openclaw', '~/.zeroclaw', '~/.nanobot', '~/.nemoclaw',
+      '~/.openshell', '~/.config/openshell',
       '~/.continue', '~/.openhands', '~/.tabby',
       '~/.config/goose', '~/.config/opencode',
       '~/Documents/Cline'
