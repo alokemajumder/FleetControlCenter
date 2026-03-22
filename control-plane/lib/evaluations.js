@@ -113,6 +113,11 @@ function createEvaluationEngine(opts = {}) {
       reviewer: null,
       reviewedAt: null,
       notes: data.notes || '',
+      // Optional performance metrics used by computeBaseline / detectDrift
+      tokensUsed: typeof data.tokensUsed === 'number' ? data.tokensUsed : null,
+      responseTime: typeof data.responseTime === 'number' ? data.responseTime : null,
+      errorCount: typeof data.errorCount === 'number' ? data.errorCount : null,
+      toolCallCount: typeof data.toolCallCount === 'number' ? data.toolCallCount : null,
       createdAt: data.createdAt || Date.now()
     };
 
@@ -303,22 +308,37 @@ function createEvaluationEngine(opts = {}) {
     let totalToolCalls = 0;
     let totalResponseTime = 0;
     let totalErrors = 0;
+    let tokenCount = 0;
+    let toolCallCount = 0;
+    let responseTimeCount = 0;
     let count = evals.length;
 
     for (const ev of evals) {
       totalScore += ev.score || 0;
-      // Extract metrics from criteria if available
-      for (const c of (ev.criteria || [])) {
-        if (c.name === 'efficiency') totalToolCalls += c.score || 0;
+      // Accumulate explicit performance metrics when present
+      if (typeof ev.tokensUsed === 'number') {
+        totalTokens += ev.tokensUsed;
+        tokenCount++;
+      }
+      if (typeof ev.responseTime === 'number') {
+        totalResponseTime += ev.responseTime;
+        responseTimeCount++;
+      }
+      if (typeof ev.errorCount === 'number') {
+        totalErrors += ev.errorCount;
+      }
+      if (typeof ev.toolCallCount === 'number') {
+        totalToolCalls += ev.toolCallCount;
+        toolCallCount++;
       }
     }
 
     const baseline = {
       agentId,
       metrics: {
-        avgTokensPerSession: count > 0 ? Math.round(totalTokens / count) : 0,
-        avgToolCalls: count > 0 ? Math.round(totalToolCalls / count) : 0,
-        avgResponseTime: count > 0 ? Math.round(totalResponseTime / count) : 0,
+        avgTokensPerSession: tokenCount > 0 ? Math.round(totalTokens / tokenCount) : 0,
+        avgToolCalls: toolCallCount > 0 ? Math.round(totalToolCalls / toolCallCount) : 0,
+        avgResponseTime: responseTimeCount > 0 ? Math.round(totalResponseTime / responseTimeCount) : 0,
         errorRate: count > 0 ? totalErrors / count : 0,
         avgScore: count > 0 ? Math.round(totalScore / count) : 0
       },
