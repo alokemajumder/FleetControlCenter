@@ -240,6 +240,38 @@ describe('Baseline and drift detection', () => {
     assert.ok(baseline.computedAt);
   });
 
+  it('should populate performance metrics in baseline when evaluations include them', () => {
+    engine.createEvaluation(makeEvalData({
+      agentId: 'a2',
+      tokensUsed: 1000,
+      responseTime: 500,
+      errorCount: 1,
+      toolCallCount: 4
+    }));
+    engine.createEvaluation(makeEvalData({
+      agentId: 'a2',
+      tokensUsed: 2000,
+      responseTime: 700,
+      errorCount: 0,
+      toolCallCount: 6
+    }));
+    const baseline = engine.computeBaseline('a2');
+    assert.equal(baseline.metrics.avgTokensPerSession, 1500);
+    assert.equal(baseline.metrics.avgResponseTime, 600);
+    assert.equal(baseline.metrics.avgToolCalls, 5);
+    // errorRate = total errors / count = 1/2 = 0.5
+    assert.equal(baseline.metrics.errorRate, 0.5);
+  });
+
+  it('should leave metrics at 0 when no evaluations carry performance fields', () => {
+    engine.createEvaluation(makeEvalData({ agentId: 'a3' }));
+    const baseline = engine.computeBaseline('a3');
+    assert.equal(baseline.metrics.avgTokensPerSession, 0);
+    assert.equal(baseline.metrics.avgResponseTime, 0);
+    assert.equal(baseline.metrics.avgToolCalls, 0);
+    assert.equal(baseline.metrics.errorRate, 0);
+  });
+
   it('should throw computing baseline with no evaluations', () => {
     assert.throws(() => engine.computeBaseline('a1', []), /No evaluations found/);
   });
@@ -267,6 +299,18 @@ describe('Baseline and drift detection', () => {
     const baseline = engine.getBaseline('a1');
     const drift = engine.detectDrift('a1', { avgScore: baseline.metrics.avgScore });
     assert.equal(drift.hasDrift, false);
+  });
+
+  it('should detect token usage drift when baseline includes performance metrics', () => {
+    engine.createEvaluation(makeEvalData({ agentId: 'a4', tokensUsed: 1000, responseTime: 400, toolCallCount: 4 }));
+    engine.createEvaluation(makeEvalData({ agentId: 'a4', tokensUsed: 1200, responseTime: 450, toolCallCount: 5 }));
+    engine.computeBaseline('a4');
+    // Simulate a large spike in tokens (>20% from baseline ~1100)
+    const drift = engine.detectDrift('a4', { avgTokensPerSession: 2200, avgResponseTime: 900 });
+    assert.equal(drift.hasDrift, true);
+    const names = drift.factors.map(f => f.name);
+    assert.ok(names.includes('tokenUsage'), 'expected tokenUsage drift factor');
+    assert.ok(names.includes('responseTime'), 'expected responseTime drift factor');
   });
 
   it('should handle missing baseline gracefully', () => {
